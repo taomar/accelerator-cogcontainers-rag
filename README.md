@@ -95,7 +95,7 @@ docker run --rm -it --platform linux/amd64 -p 5000:5000 --memory 6g --cpus 2 \
 ### **7️⃣ Prepare & Index Documents**
 Store your dataset inside the `data/` folder, then run:
 ```bash
-python basic_rag/index_documents.py
+python src/index_documents.py
 ```
 
 Verify if the Qdrant Collections Exist
@@ -105,7 +105,7 @@ curl -X GET "http://localhost:6333/collections"
 
 ### **8️⃣ Start the Streamlit UI**
 ```bash
-streamlit run basic_rag/streamlit_app.py
+streamlit run src/streamlit_app.py
 ```
 
 ### **9️⃣ Test Queries**

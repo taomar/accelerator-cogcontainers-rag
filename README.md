@@ -139,6 +139,7 @@ The system will:
    - **Reranking using bge-m3**
    This ensures better retrieval even for **short Arabic queries**.
 
+
 - 3️⃣ Mitigating those Issues** 
 
 📌 Our current implementation mitigates these issues with:

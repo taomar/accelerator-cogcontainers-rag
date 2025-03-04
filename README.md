@@ -124,11 +124,12 @@ The system will:
 ---
 
 ## 📌 **Addressing Arabic Language Challenges**
-### **1️⃣ Challenge: Arabic Ranker Models**
+
+- 1️⃣ Challenge: Arabic Ranker Models**
 📌 **Problem:** Many ranker models struggle to reconstruct answers when the supporting information is scattered across multiple chunks.  
 ✅ **Solution:** We integrate **BM25 + bge-m3 reranker**, which improves the ranking of relevant Arabic documents based on **semantic similarity and keyword matching**.
 
-### **2️⃣ Challenge: Arabic Embedding Models**
+-  2️⃣ Challenge: Arabic Embedding Models**
 📌 **Problem:** Single-word Arabic queries sometimes fail to retrieve results, even when relevant content exists in the knowledge base.  
 ✅ **Solution:** We use a **hybrid search approach**, combining:
    - **Vector search (Ollama embeddings)**
@@ -136,14 +137,14 @@ The system will:
    - **Reranking using bge-m3**
    This ensures better retrieval even for **short Arabic queries**.
 
-### **3️⃣ Mitigating those Issues** 
+- 3️⃣ Mitigating those Issues** 
 📌 Our current implementation mitigates these issues with:
 - Hybrid Search (BM25 + Vectors)
 - Re-ranking (bge-m3)
 - Named Entity Recognition (NER)
 - LLM Context Expansion
 
-### **4️⃣ Future Improvements
+- 4️⃣ Future Improvements
 🟢 **Experiment with specialized Arabic embedding models** (e.g., Arabic-trained versions of BGE or MARBERT).  
 🟢 **Optimize BM25 weights for Arabic vs. English separately** to fine-tune ranking balance.  
 🟢 **Extend Named Entity Recognition (NER) to improve keyword-based lookup**.  

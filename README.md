@@ -52,8 +52,8 @@ Integrating **Azure AI Containers** enhances the **accuracy, security, and usabi
 
 ### **1️⃣ Clone the Repository**
 ```bash
-git clone https://github.com/your-repo/rag-deployable.git
-cd rag-deployable
+git clone https://github.com/your-repo/edge-rag.git
+cd edge-rag
 ```
 
 ### **2️⃣ Set Up Python Virtual Environment**
@@ -77,8 +77,8 @@ docker run -p 6333:6333 -p 6334:6334 qdrant/qdrant
 ### **5️⃣ Install & Run Ollama**
 Follow Ollama installation from [Ollama's official website](https://ollama.com). Then, pull the required models:
 ```bash
-ollama pull mistral:7b
-ollama pull command-r7b-arabic:7b
+ollama pull qwen2.5:0.5b
+ollama pull gemma2:2b
 ollama pull bge-m3
 ```
 

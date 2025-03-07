@@ -122,26 +122,36 @@ def rerank_documents(query, retrieved_docs):
 
 # Function to generate AI response
 def generate_response(query):
-    """Generates an AI response using the retrieved context."""
+    """Generates a response using the appropriate LLM model based on the detected language."""
     language = detect_language(query)
-    llm_model = "gemma2:2b" if language == "arabic" else "qwen2.5:0.5b"
+    model_name = "gemma2:2b" if language == "arabic" else "qwen2.5:0.5b"
 
-    retrieved_docs = search_documents(query, language)
-    reranked_docs = rerank_documents(query, retrieved_docs)
-    context = "\n".join(reranked_docs)
+    # Force structured output in Arabic
+    if language == "arabic":
+        prompt = f"""
+        قدم إجابة واضحة باللغة العربية عن السؤال التالي، مع ترتيب المعلومات بشكل منسق، واستخدم الفقرات والتعداد النقطي كما هو مطلوب:
 
-    system_prompt = (
-        "أجب باللغة العربية فقط باستخدام المعلومات التالية:\n" + context
-        if language == "arabic"
-        else "Answer in English only using the following information:\n" + context
-    )
+        {query}
 
-    response = ollama.chat(model=llm_model, messages=[
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": query}
-    ])
-    
-    return response["message"]["content"]
+        - **المقدمة**: ابدأ بتقديم تعريف مختصر عن المفهوم.
+        - **المكونات**: اشرح المكونات الأساسية بشكل منظم.
+        - **المجالات التطبيقية**: قدم أمثلة عملية لاستخداماته في مختلف المجالات.
+        - **الخاتمة**: قدم ملخصًا نهائيًا بطريقة واضحة.
+
+        تأكد من استخدام النقاط والعناوين الفرعية لتوضيح الإجابة.
+        """
+
+    else:
+        prompt = query
+
+    response = ollama.chat(model=model_name, messages=[{"role": "user", "content": prompt}])
+
+    # Ensure proper formatting by replacing broken newlines
+    formatted_response = response['message']['content']
+    formatted_response = formatted_response.replace(". ", ".\n\n")  # Add extra spacing after sentences
+    formatted_response = formatted_response.replace("**", "\n\n**")  # Ensure bold sections are on new lines
+
+    return formatted_response
 
 # Test queries
 query_ar = "ما هو الذكاء الاصطناعي؟"

@@ -103,14 +103,15 @@ def load_documents():
 # Function to index documents into Qdrant
 def index_document(text):
     """Indexes a document into Qdrant with language metadata."""
-    embedding, lang = generate_embedding(text)
+    lang = detect_language(text)  # Detect language separately
+    embedding = generate_embedding(text)  # Generate embedding
 
     point = {
         "id": str(uuid.uuid4()),  # Unique UUID for each chunk
         "vector": embedding,
         "payload": {"text": text, "language": lang}
     }
-    
+
     collection_name = f"rag_docs_{lang}"  # Store in language-specific collections
     client.upsert(collection_name=collection_name, points=[point])
 

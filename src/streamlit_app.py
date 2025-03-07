@@ -50,8 +50,10 @@ if st.button("🔎 Search"):
         # 🤖 Generate AI response
         st.subheader("🤖 AI Response")
         ai_response = generate_response(query_text)
-        st.write(ai_response)
 
+        # Use markdown to preserve formatting
+        st.markdown(f"### 🟢 Response:\n\n{ai_response}", unsafe_allow_html=True)
+       
         # 📌 Additional Debug Info (Expandable)
         with st.expander("📊 Debug Info: Retrieval & Model Selection"):
             st.markdown(f"""

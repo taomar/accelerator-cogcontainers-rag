@@ -77,6 +77,7 @@ docker run -p 6333:6333 -p 6334:6334 qdrant/qdrant
 ### **5️⃣ Install & Run Ollama**
 Follow Ollama installation from [Ollama's official website](https://ollama.com). Then, pull the required models:
 ```bash
+ollama serve 
 ollama pull qwen2.5:0.5b
 ollama pull gemma2:2b
 ollama pull bge-m3
@@ -90,6 +91,17 @@ docker run --rm -it --platform linux/amd64 -p 5000:5000 --memory 6g --cpus 2 \
   Eula=accept \
   Billing="$AZURE_LANGUAGE_BILLING_URL" \
   ApiKey="$AZURE_LANGUAGE_API_KEY"
+```
+
+```
+curl -X POST "http://localhost:5000/text/analytics/v3.1/languages" \
+     -H "Content-Type: application/json" \
+     -d '{
+          "documents": [
+            {"id": "1", "text": "Hello, how are you?"},
+            {"id": "2", "text": "مرحبا كيف حالك؟"}
+          ]
+        }'
 ```
 
 ### **7️⃣ Prepare & Index Documents**

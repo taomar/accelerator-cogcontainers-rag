@@ -121,37 +121,28 @@ def rerank_documents(query, retrieved_docs):
         return texts[:2]  # If reranking fails, return first 2 docs
 
 # Function to generate AI response
-def generate_response(query):
+def generate_response(query, max_length=256, temperature=0.7, top_k=50, repetition_penalty=1.2):
     """Generates a response using the appropriate LLM model based on the detected language."""
     language = detect_language(query)
     model_name = "gemma2:2b" if language == "arabic" else "qwen2.5:0.5b"
 
-    # Force structured output in Arabic
+    # Ensure Arabic queries generate Arabic responses
     if language == "arabic":
         prompt = f"""
-        قدم إجابة واضحة باللغة العربية عن السؤال التالي، مع ترتيب المعلومات بشكل منسق، واستخدم الفقرات والتعداد النقطي كما هو مطلوب:
+        جاوب على السؤال التالي باللغة العربية فقط، ولا تستخدم اللغة الإنجليزية في الإجابة:
 
         {query}
-
-        - **المقدمة**: ابدأ بتقديم تعريف مختصر عن المفهوم.
-        - **المكونات**: اشرح المكونات الأساسية بشكل منظم.
-        - **المجالات التطبيقية**: قدم أمثلة عملية لاستخداماته في مختلف المجالات.
-        - **الخاتمة**: قدم ملخصًا نهائيًا بطريقة واضحة.
-
-        تأكد من استخدام النقاط والعناوين الفرعية لتوضيح الإجابة.
         """
-
     else:
-        prompt = query
+        prompt = query  # English default
 
-    response = ollama.chat(model=model_name, messages=[{"role": "user", "content": prompt}])
+    response = ollama.chat(
+        model=model_name,
+        messages=[{"role": "user", "content": prompt}],
+        options={"temperature": temperature, "top_k": top_k, "max_length": max_length, "repetition_penalty": repetition_penalty}
+    )
 
-    # Ensure proper formatting by replacing broken newlines
-    formatted_response = response['message']['content']
-    formatted_response = formatted_response.replace(". ", ".\n\n")  # Add extra spacing after sentences
-    formatted_response = formatted_response.replace("**", "\n\n**")  # Ensure bold sections are on new lines
-
-    return formatted_response
+    return response["message"]["content"]
 
 # Test queries
 query_ar = "ما هو الذكاء الاصطناعي؟"

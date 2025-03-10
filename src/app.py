@@ -106,5 +106,5 @@ with col_info:
     - **Vector Database**: [Qdrant](https://qdrant.tech/)  
     - **Embedding Models**: `bge-m3` for English & Arabic  
     - **LLM Models**: `gemma2:2b` (Arabic) & `qwen2.5:0.5b` (English)  
-    - **Azure AI Containers **:
+    - **Azure AI Containers**: better accuracy, security, and usability 
     """)

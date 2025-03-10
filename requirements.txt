@@ -5,3 +5,4 @@ semantic-kernel
 streamlit  # Optional for a simple UI
 rank-bm25
 nltk
+farasa

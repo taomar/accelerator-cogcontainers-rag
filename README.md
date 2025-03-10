@@ -6,7 +6,7 @@ This project showcases a **Retrieval-Augmented Generation (RAG) system** designe
 ## **Why This Matters?**
 ✅ **Hybrid Retrieval**: Combines **Qdrant (vector search)**, **BM25 (keyword matching)**, and **Ollama embeddings** to enhance ranking and accuracy.  
 ✅ **Multilingual AI**: Supports **Arabic & English** with optimized retrieval for short queries and complex prompts.  
-✅ **Azure AI Integration**: Leverages **Azure AI Containers** for **Language Detection, and Document Intelligence, ensuring **better accuracy, security, and usability**—even in offline environments.  
+✅ **Azure AI Integration**: Leverages **Azure AI Containers** for ensuring **better accuracy, security, and usability**—even in offline environments.  
 ✅ **On-Premise Ready**: Designed for **full offline deployment**, making it ideal for **customers needing secure, cloud-independent AI solutions**.  
 
 🚀 **Use this as a PoC to help customers deploy an enterprise-grade RAG system on-premise using Azure AI Containers.**  
@@ -75,6 +75,7 @@ venv\Scripts\activate   # Windows
 ### **3️⃣ Install Dependencies**
 ```bash
 pip install -r requirements.txt
+docker compose up -d
 ```
 
 ### **4️⃣ Start Qdrant (Vector Database)**

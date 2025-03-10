@@ -66,7 +66,7 @@ with col_retrieved:
     retrieved_docs = st.session_state.get("retrieved_docs", [])
 
     if retrieved_docs:
-        for idx, doc in enumerate(retrieved_docs):
+        for idx, doc in enumerate(retrieved_docs):  # ✅ Removed [:5] to show all
             st.markdown(f"**{idx + 1}.** {doc['text']} _(Score: {doc['score']:.2f})_")
     else:
         st.warning("⚠️ No relevant documents found!")
@@ -82,7 +82,32 @@ with col_ai:
             repetition_penalty=st.session_state["generation_params"]["repetition_penalty"]
         )
 
-        st.markdown(f"<div class='ai-response'><h4>🔹 AI Response:</h4><p>{ai_response}</p></div>", unsafe_allow_html=True)
+        language = st.session_state.get("language", "english")
+
+        # ✅ Improved Arabic Formatting
+        if language == "arabic":
+            formatted_response = ai_response.replace("**", "<b>").replace("\n", "<br>")  # Convert markdown to HTML
+            wrapped_response = f"""
+            <div dir="rtl" style="
+                text-align: right;
+                direction: rtl;
+                unicode-bidi: embed;
+                font-size: 18px;
+                line-height: 2;
+                font-family: Arial, sans-serif;
+                padding: 15px;
+                background-color: #2a2a2a;
+                border-radius: 8px;
+                color: white;
+                border: 1px solid #444;
+                ">
+                {formatted_response}
+            </div>
+            """
+            st.markdown(wrapped_response, unsafe_allow_html=True)
+        else:
+            # ✅ Standard Markdown Rendering for English
+            st.markdown(ai_response, unsafe_allow_html=True)
 
 # 🏗️ Third Row: Example Prompts & System Information
 col_prompts, col_info = st.columns(2)

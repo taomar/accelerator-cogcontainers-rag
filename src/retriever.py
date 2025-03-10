@@ -17,7 +17,7 @@ client = QdrantClient("localhost", port=6333)
 # Embedding sizes for models
 EMBEDDING_SIZES = {
     "english": 1024,  # bge-m3 (Optimized for retrieval)
-    "arabic": 1024,   # bge-m3 (Arabic-compatible embeddings)
+    "arabic": 1024,   # jaluma/arabert embeddings (Padded to match Qdrant)
 }
 
 # API Endpoints
@@ -43,98 +43,134 @@ def detect_language(text):
     return "english"  # Default to English if detection fails
 
 # Function to generate embeddings
+import numpy as np
+
 def generate_embedding(text, language):
-    """Generates optimized embeddings using BGE-M3 for both Arabic & English."""
-    response = ollama.embeddings(model="bge-m3", prompt=text)
-    return response["embedding"], language
+    """Generates embeddings using different models for Arabic & English."""
+    model_name = "jaluma/arabert-all-nli-triplet-matryoshka" if language == "arabic" else "bge-m3"
+    
+    response = ollama.embeddings(model=model_name, prompt=text)
+    embedding = response["embedding"]
+
+    # ✅ Fix: Ensure embedding size matches Qdrant (Arabic → 768, English → 1024)
+    expected_size = 768 if language == "arabic" else 1024
+
+    # 🔹 Ensure embedding has the correct size
+    if len(embedding) < expected_size:
+        embedding = np.pad(embedding, (0, expected_size - len(embedding)), 'constant')
+    elif len(embedding) > expected_size:
+        embedding = embedding[:expected_size]  # Truncate if larger
+
+    return list(embedding)  # ✅ FIXED: No `.tolist()`, returning list directly
 
 # Function to tokenize text for BM25
-def tokenize(text):
-    """Tokenizes input text for BM25 retrieval."""
+def tokenize_text(text, language):
+    """Tokenizes input text for BM25 retrieval, handling Arabic separately."""
+    if language == "arabic":
+        return word_tokenize(text)  # Arabic tokenization (better for BM25)
     return [word.lower() for word in word_tokenize(text) if word not in string.punctuation]
 
 # Function to search documents with optimized retrieval
 def search_documents(query, language):
-    """Retrieves documents using vector search & BM25 keyword matching."""
-    query_vector, _ = generate_embedding(query, language)
+    """Retrieves documents using hybrid search (Vector + BM25)."""
+    query_vector = generate_embedding(query, language)
     collection_name = "rag_docs_ar" if language == "arabic" else "rag_docs_en"
 
-    # Ensure Qdrant collection exists
     if not client.collection_exists(collection_name):
         print(f"🚨 Collection '{collection_name}' not found in Qdrant. Skipping retrieval.")
         return []
 
-    retrieved_docs = []
+    print(f"🔎 Searching for query: {query} in collection: {collection_name}")
 
-    # Perform vector search in Qdrant
+    retrieved_docs = []  # ✅ Initialize the list before use
+    seen_texts = set()   # ✅ Track unique document texts
+
     try:
         vector_results = client.search(
             collection_name=collection_name,
             query_vector=query_vector,
-            limit=5,
+            limit=20,  # Retrieve more docs to improve ranking
             with_payload=True
         )
-        retrieved_docs = [{"text": hit.payload["text"], "score": hit.score} for hit in vector_results] if vector_results else []
+
+        # ✅ Populate retrieved_docs properly
+        for hit in vector_results:
+            doc_text = hit.payload["text"]
+            if doc_text not in seen_texts:
+                retrieved_docs.append({"text": doc_text, "score": hit.score})
+                seen_texts.add(doc_text)
+
+        print(f"🔹 Retrieved {len(retrieved_docs)} unique documents")
+
     except Exception as e:
         print(f"⚠️ Vector search error: {e}")
+        return []  # ✅ Return an empty list if retrieval fails
 
-    # BM25 Keyword Search Optimization for English
-    if language == "english":
+    # ✅ Ensure retrieved_docs exists before filtering
+    if retrieved_docs:
         try:
             corpus = [doc["text"] for doc in retrieved_docs]
-            tokenized_corpus = [tokenize(doc) for doc in corpus]
+            tokenized_corpus = [tokenize_text(doc, language) for doc in corpus]
             bm25 = BM25Okapi(tokenized_corpus)
-            query_tokens = tokenize(query)
+
+            query_tokens = tokenize_text(query, language)
             bm25_scores = bm25.get_scores(query_tokens)
 
-            # Merge & rank results
             for idx, doc in enumerate(retrieved_docs):
                 doc["bm25_score"] = bm25_scores[idx]
 
-            retrieved_docs = sorted(retrieved_docs, key=lambda x: x["bm25_score"] + x["score"], reverse=True)
+            # ✅ Boost BM25 for Arabic queries
+            weight_vector = 0.5 if language == "english" else 1.2  
+            retrieved_docs = sorted(retrieved_docs, key=lambda x: (x["bm25_score"] * weight_vector) + x["score"], reverse=True)
+
         except Exception as e:
             print(f"⚠️ BM25 search error: {e}")
 
-    return retrieved_docs[:5]  # Return top 5 ranked documents
+    return retrieved_docs  # ✅ Return the list safely
 
-# Function to re-rank retrieved documents
-def rerank_documents(query, retrieved_docs):
-    """Re-ranks retrieved documents using similarity scores from BGE-M3 embeddings."""
-    if not retrieved_docs:
-        return ["No relevant documents found."]
 
-    texts = [doc["text"] for doc in retrieved_docs]
-    
-    try:
-        query_embedding = ollama.embeddings(model="bge-m3", prompt=query)["embedding"]
-        doc_embeddings = [ollama.embeddings(model="bge-m3", prompt=text)["embedding"] for text in texts]
+# Function to clean AI responses and enforce proper Arabic formatting
+def clean_ai_response(text, language):
+    """Cleans AI response text and ensures proper right-to-left (RTL) formatting for Arabic."""
 
-        # Compute similarity scores
-        scores = [np.dot(doc_embedding, query_embedding) for doc_embedding in doc_embeddings]
+    # Remove unwanted HTML tags
+    text = re.sub(r'<.*?>', '', text)
 
-        # Sort documents by highest similarity score
-        ranked_docs = sorted(zip(texts, scores), key=lambda x: x[1], reverse=True)
+    if language == "arabic":
+        # ✅ Ensure proper Arabic bullets (nested lists fix)
+        text = text.replace("•", "◼").replace("-", "◼")  # Fix unordered bullets
+        text = text.replace("  *", "◼").replace("*", "◼")  # Handle extra bullets
 
-        return [doc[0] for doc in ranked_docs[:2]]  # Return top 2 ranked documents
-    except Exception as e:
-        print(f"⚠️ Reranking error: {e}")
-        return texts[:2]  # If reranking fails, return first 2 docs
+        # ✅ Convert numbers to Arabic numerals
+        text = text.replace("1.", "١.").replace("2.", "٢.").replace("3.", "٣.").replace("4.", "٤.").replace("5.", "٥.")
+
+        # ✅ Enforce strict right alignment and better spacing
+        text = text.replace("\n", "<br>")  # Preserve new lines
+        text = f'<div dir="rtl" style="text-align: right; direction: rtl; unicode-bidi: embed; font-size: 20px; line-height: 2.2; font-family: Arial, sans-serif;">{text}</div>'
+
+    return text
 
 # Function to generate AI response
-def generate_response(query, max_length=256, temperature=0.7, top_k=50, repetition_penalty=1.2):
-    """Generates a response using the appropriate LLM model based on the detected language."""
+
+def generate_response(query, max_length=512, temperature=0.9, top_k=40, repetition_penalty=1.0):
+    """Generates a response using the appropriate LLM model based on detected language."""
+
     language = detect_language(query)
     model_name = "gemma2:2b" if language == "arabic" else "qwen2.5:0.5b"
 
-    # Ensure Arabic queries generate Arabic responses
     if language == "arabic":
         prompt = f"""
-        جاوب على السؤال التالي باللغة العربية فقط، ولا تستخدم اللغة الإنجليزية في الإجابة:
+        جاوب على السؤال التالي باللغة العربية فقط:
 
-        {query}
+        **السؤال:** {query}
+
+        **الإجابة يجب أن تكون:**
+        ◼ منظمة ومفصلة
+        ◼ بدون تكرار غير ضروري
+        ◼ لا تتوقف في منتصف الجملة، تأكد من إنهاء الفكرة بالكامل
         """
     else:
-        prompt = query  # English default
+        prompt = f"Answer the following question in clear, well-structured English:\n\n{query}"
 
     response = ollama.chat(
         model=model_name,
@@ -143,13 +179,3 @@ def generate_response(query, max_length=256, temperature=0.7, top_k=50, repetiti
     )
 
     return response["message"]["content"]
-
-# Test queries
-query_ar = "ما هو الذكاء الاصطناعي؟"
-query_en = "What is artificial intelligence?"
-
-print("🔹 Arabic Query:", query_ar)
-print("🟢 Arabic Response:", generate_response(query_ar))
-
-print("\n🔹 English Query:", query_en)
-print("🟢 English Response:", generate_response(query_en))

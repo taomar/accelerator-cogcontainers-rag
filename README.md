@@ -125,6 +125,12 @@ Verify if the Qdrant Collections Exist
 curl -X GET "http://localhost:6333/collections"
 ```
 
+Clean Qdrant Collections if needed. 
+```
+curl -X DELETE "http://localhost:6333/collections/rag_docs_en"
+curl -X DELETE "http://localhost:6333/collections/rag_docs_ar"
+```
+
 ### **8️⃣ Start the Streamlit UI**
 ```bash
 streamlit run src/streamlit_app.py
@@ -172,7 +178,7 @@ The system will:
 
 - 4️⃣ Future Improvements
 
-🟢 **Experiment with specialized Arabic embedding models** (e.g., Arabic-trained versions of BGE or MARBERT).  
+🟢 **Experiment with specialized Arabic embedding models** (e.g., Arabic-trained versions of BGE or ARABERT).  
 🟢 **Optimize BM25 weights for Arabic vs. English separately** to fine-tune ranking balance.  
 🟢 **Extend Named Entity Recognition (NER) to improve keyword-based lookup**.  
 🟢 **Benchmark different Arabic language models for better retrieval performance**.

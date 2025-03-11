@@ -114,16 +114,23 @@ col_prompts, col_info = st.columns(2)
 
 with col_prompts:
     st.subheader("📝 Example Prompts")
+
     example_prompts = [
-        # ("What are the key benefits of artificial intelligence in healthcare?", True),
-        # ("ما هي الفوائد الرئيسية للذكاء الاصطناعي في الرعاية الصحية؟", True),
-        # ("How did AI influence ancient civilizations?", False),
-        # ("كيف أثر الذكاء الاصطناعي على الحضارات القديمة؟", False),
-        
-        ("Artificial intelligence in healthcare is improving diagnostics.", True),
-        ("كيف يمكن لخوارزميات الذكاء الاصطناعي مساعدة الأطباء؟", True),
-        ("What are the ethical concerns of AI in healthcare?", False),
-        ("ما هي المخاطر القانونية لاستخدام الذكاء الاصطناعي في الطب؟", False),    
+        # English Prompts (Indexed ✅)
+        ("What are the key benefits of artificial intelligence in healthcare?", True),
+        ("How does AI improve disease diagnostics and patient care?", True),
+
+        # Arabic Prompts (Indexed ✅)
+        ("ما هي الفوائد الرئيسية للذكاء الاصطناعي في الرعاية الصحية؟", True),
+        ("كيف يساعد الذكاء الاصطناعي في تشخيص الأمراض وتحسين رعاية المرضى؟", True),
+
+        # English Prompts (Not Indexed ❌)
+        ("What is the impact of AI on job automation and future employment?", False),
+        ("How can AI improve supply chain efficiency in manufacturing?", False),
+
+        # Arabic Prompts (Not Indexed ❌)
+        ("ما هو تأثير الذكاء الاصطناعي على التشغيل الآلي للوظائف ومستقبل التوظيف؟", False),
+        ("كيف يمكن للذكاء الاصطناعي تحسين كفاءة سلاسل التوريد في التصنيع؟", False),
     ]
 
     for prompt, is_indexed in example_prompts:
@@ -135,7 +142,7 @@ with col_info:
     st.markdown("""
     - **Retrieval Method**: Hybrid (Vector Search + BM25)  
     - **Vector Database**: [Qdrant](https://qdrant.tech/)  
-    - **Embedding Models**: `bge-m3` & arabert for English & Arabic  
+    - **Embedding Models**: `bge-m3 for English & Arabic  
     - **LLM Models**: `gemma2:2b` (Arabic) & `qwen2.5:0.5b` (English)  
     - **Azure AI Containers**: better accuracy, security, and usability 
     """)

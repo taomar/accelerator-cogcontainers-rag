@@ -59,9 +59,15 @@ Azure AI Containers enable advanced AI capabilities while keeping the system **f
 ---
 ## 🛠️ **Setup & Installation**  
 
+### **1️⃣ Preinstalled Requirements**
+Ensure you have the following installed before proceeding:
+- **Python 3.9+** → [Download Here](https://www.python.org/downloads/)
+- **Docker** → [Download Here](https://www.docker.com/get-started/)
+- **Ollama** → [Install Guide](https://ollama.com)
+
 ### **1️⃣ Clone the Repository**
 ```bash
-git clone https://github.com/your-repo/edge-rag.git
+git clone https://github.com/hamzaelgh/edge-rag.git
 cd edge-rag
 ```
 
@@ -132,10 +138,27 @@ curl -X DELETE "http://localhost:6333/collections/rag_docs_en"
 curl -X DELETE "http://localhost:6333/collections/rag_docs_ar"
 ```
 
+## ** Testing the System 
+
+```
+PYTHONPATH=$(pwd) pytest tests/test_indexer.py # Test Indexing & Qdrant Setup
+
+PYTHONPATH=$(pwd) pytest tests/test_retriever.py # Test Document Retrieval & Search
+
+PYTHONPATH=$(pwd) pytest tests/test_ai_responses.py # Test AI Response Generation 
+
+PYTHONPATH=$(pwd) python tests/test_retriever_queries.py # Output: Retrieved documents, Detected query language & Relevance scores
+
+PYTHONPATH=$(pwd) python tests/test_ai_responses.py # Test AI Response with Context. This will test if the AI correctly generates responses based on retrieved documents.
+```
+
+
 ### **8️⃣ Start the Streamlit UI**
 ```bash
 streamlit run src/app.py
 ```
+
+
 
 ### **9️⃣ Test Queries**
 Open your browser at `http://localhost:8501` and enter any query.  

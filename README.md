@@ -3,7 +3,7 @@
 
 This project showcases a **Retrieval-Augmented Generation (RAG) system** designed for **flexibility, scalability, and real-world deployment**. 
 
-Powered by **Azure AI Containers**, it ensures **high-performance retrieval, accuracy, and security**—whether running **fully offline, on-premise, or in any cloud environment**.
+Powered by **Azure AI Containers**, it ensures **high-performance retrieval, accuracy, and security**—whether running **fully offline, or in any cloud environment**.
 
 ## **Why This Matters?**
 

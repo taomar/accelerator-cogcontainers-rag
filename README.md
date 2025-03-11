@@ -75,7 +75,7 @@ venv\Scripts\activate   # Windows
 ### **3️⃣ Install Dependencies**
 ```bash
 pip install -r requirements.txt
-docker compose up -d
+source .env 
 ```
 
 ### **4️⃣ Start Qdrant (Vector Database)**

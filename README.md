@@ -38,23 +38,23 @@ Azure AI Containers enable advanced AI capabilities while keeping the system **f
 
 ---
 
-## 🏗 Enhanced User Flow with Azure AI Containers  
+## ✅ Enhanced User Flow with Azure AI Containers
 
 | **Step** | **Tool Used** | **Description** |
 |----------|-------------|----------------|
-| **1. User enters or speaks a query** | Streamlit UI + **Azure AI Speech** | Users can either **type** or **speak** their query. |
-| **2. Spellcheck query** | **Bergamot (Local Spellchecker)** | Fixes **typos** before processing the query. |
-| **3. Detect query language** | **Azure AI Language** | Determines whether the query is in **Arabic or English**. |
-| **4. Translate query (if needed)** | **Azure Translator** | Converts **non-Arabic/English queries** into a supported language. |
-| **5. Generate query embedding** | **Ollama (`bge-m3` and `arabert` )** | Converts the query into a **numerical vector representation**. |
-| **6. Retrieve relevant documents** | **Qdrant (Vector DB)** | Performs a **hybrid search**: **vector similarity search** (embeddings) + **BM25 keyword match**. |
-| **7. Rank retrieved documents** | **BM25 (Rank-BM25) + `bge-m3`** | Ranks results based on **keyword relevance** and **vector similarity**. |
-| **8. Extract named entities (Optional)** | **Azure AI NER** | Identifies **key entities** in the query to improve retrieval precision. |
-| **9. Apply OCR for document parsing** | **Azure Document Intelligence** | Extracts **text from scanned PDFs, images, or structured documents** to improve knowledge base ingestion. |
-| **10. Summarize long documents (Optional)** | **Azure Text Summarization** | Summarizes **retrieved long documents** before passing to the LLM. |
-| **11. Generate an AI response** | **Ollama (`Qwen/Gemma`)** | Uses an **LLM to generate an answer** using the **top-ranked documents** as context. |
-| **12. Apply content safety filters** | **Azure AI Content Safety** | Ensures the **AI-generated response** follows safety guidelines, filtering out **harmful or inappropriate content**. |
-| **13. Display response** | **Streamlit UI** | Shows **retrieved documents, scores, and final AI response**. |
+| **1. User enters or speaks a query** | Streamlit UI + **Azure AI Speech (Offline Container)** | Users can either type or speak their query. |
+| **2. Spellcheck query** | **Bergamot (Local Spellchecker)** | Fixes typos before processing the query. |
+| **3. Detect query language** | **Azure AI Language (Offline Container)** | Determines whether the query is in Arabic or English. |
+| **4. Translate query (if needed)** | **Azure Translator (Optional)** | Converts non-Arabic/English queries into a supported language. |
+| **5. Generate query embedding** | **Ollama (`bge-m3` for English & Arabic)** | Converts the query into a numerical vector representation. |
+| **6. Retrieve relevant documents** | **Qdrant (Vector DB) + BM25 Hybrid Retrieval** | Performs a **hybrid search**: vector similarity search (embeddings) + keyword-based retrieval (BM25). |
+| **7. Rank retrieved documents** | **BM25 (Rank-BM25) + `bge-m3` Reranking** | Ranks results based on **keyword relevance and vector similarity**. |
+| **8. Extract named entities (Optional)** | **Azure AI NER (Offline Container)** | Identifies **key entities** in the query to improve retrieval precision. |
+| **9. Apply OCR for document parsing** | **Azure Document Intelligence (Offline Container)** | Extracts text from **scanned PDFs, images, or structured documents** to improve knowledge base ingestion. |
+| **10. Summarize long documents (Optional)** | **Azure Text Summarization (Offline Container)** | Summarizes **retrieved long documents** before passing them to the LLM. |
+| **11. Generate an AI response** | **Ollama (`Qwen2.5` for English & `Gemma2B` for Arabic)** | Uses an **LLM** to generate an **answer using the top-ranked documents as context**. |
+| **12. Apply content safety filters** | **Azure AI Content Safety (Offline Container)** | Ensures the **AI-generated response follows safety guidelines**, filtering out harmful or inappropriate content. |
+| **13. Display response** | **Streamlit UI** | Shows **retrieved documents, scores, and the final AI response**. |
 
 ---
 ## 🛠️ **Setup & Installation**  

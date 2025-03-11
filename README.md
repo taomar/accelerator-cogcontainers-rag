@@ -23,20 +23,20 @@ Azure AI Containers enable **advanced AI capabilities** while keeping the system
 
 These services enhance **document processing, query understanding, and response generation**, making the system **more accurate, secure, and scalable**.
 
-### **1️ Improving Document Processing & Indexing**
+### **Improving Document Processing & Indexing**
 - **Azure AI Vision - Read** → Extracts text from scanned documents & images, making PDFs and handwritten content searchable.  
 - **Document Intelligence** → Processes structured documents (invoices, contracts) before indexing, improving retrieval in legal and enterprise use cases.  
 
-### **2️ Enhancing Query Understanding & Retrieval**
+### **Enhancing Query Understanding & Retrieval**
 -  **Azure AI Language** → Detects **query language**
 - **Conversational Language Understanding (CLU)** → Classifies **query intent** (e.g., **search vs. summarization**) for smarter responses.  
 
-### **3️ Enhancing AI-Generated Responses**
+### **Enhancing AI-Generated Responses**
 - **Sentiment Analysis** → Adjusts AI response tone (formal/casual).  
 - **Text Translation** → Enables **cross-language retrieval** (Arabic query → English documents).  
 - **Neural Text-to-Speech** → Converts AI responses into voice for **future chatbot integrations**.  
 
-### **4️ Ensuring Content Safety & Compliance**  
+### **Ensuring Content Safety & Compliance**  
 - **Azure AI Content Safety** → Scans both **text and images** for **violence, hate speech, self-harm, and explicit content**, ensuring **AI-generated responses and retrieved documents comply with safety standards**.  
 
 🔹 **These integrations ensure the RAG system remains fully functional in offline environments while benefiting from enterprise-grade AI.**  
@@ -48,18 +48,21 @@ These services enhance **document processing, query understanding, and response 
 
 ## 🏗 Enhanced User Flow with Azure AI Containers  
 
-| **Step**                     | **Tool Used**                 | **Description** |
-|------------------------------|------------------------------|----------------|
-| **1. User enters a query**    | Streamlit UI                 | Provides an input field for users to enter queries. |
-| **2. Detect query language**  | **Azure AI Language (Offline Container)**  | Determines whether the query is in Arabic or English. |
-| **3. Generate query embedding** | Ollama (`bge-m3`) | Converts the query into a numerical vector representation. |
-| **4. Retrieve relevant documents** | Qdrant (Vector DB)       | Performs a **hybrid search**: **vector similarity search** (embeddings) + **BM25 keyword match**. |
-| **5. Rank retrieved documents** | BM25 (Rank-BM25) + `bge-m3`  | Ranks results based on keyword relevance and vector similarity. |
-| **6. Extract named entities (Optional)** | **Azure AI NER (Offline Container)** | Identifies key entities in the query to improve retrieval precision. |
-| **7. Apply OCR for document parsing** | **Azure Document Intelligence (Offline Container)** | Extracts text from scanned PDFs, images, or structured documents to improve knowledge base ingestion. |
-| **8. Generate an AI response** | Ollama (`Qwen/Gemma`) | Uses an **LLM to generate an answer** using the top-ranked documents as context. |
-| **9. Apply content safety filters** | **Azure AI Content Safety (Offline Container)** | Ensures the **AI-generated response follows safety guidelines**, filtering out harmful or inappropriate content. |
-| **10. Display response**       | Streamlit UI                 | Shows retrieved documents, scores, and final AI response. |
+| **Step** | **Tool Used** | **Description** |
+|----------|-------------|----------------|
+| **1. User enters or speaks a query** | Streamlit UI + **Azure AI Speech** | Users can either **type** or **speak** their query. |
+| **2. Spellcheck query** | **Bergamot (Local Spellchecker)** | Fixes **typos** before processing the query. |
+| **3. Detect query language** | **Azure AI Language** | Determines whether the query is in **Arabic or English**. |
+| **4. Translate query (if needed)** | **Azure Translator** | Converts **non-Arabic/English queries** into a supported language. |
+| **5. Generate query embedding** | **Ollama (`bge-m3` and `arabert` )** | Converts the query into a **numerical vector representation**. |
+| **6. Retrieve relevant documents** | **Qdrant (Vector DB)** | Performs a **hybrid search**: **vector similarity search** (embeddings) + **BM25 keyword match**. |
+| **7. Rank retrieved documents** | **BM25 (Rank-BM25) + `bge-m3`** | Ranks results based on **keyword relevance** and **vector similarity**. |
+| **8. Extract named entities (Optional)** | **Azure AI NER** | Identifies **key entities** in the query to improve retrieval precision. |
+| **9. Apply OCR for document parsing** | **Azure Document Intelligence** | Extracts **text from scanned PDFs, images, or structured documents** to improve knowledge base ingestion. |
+| **10. Summarize long documents (Optional)** | **Azure Text Summarization** | Summarizes **retrieved long documents** before passing to the LLM. |
+| **11. Generate an AI response** | **Ollama (`Qwen/Gemma`)** | Uses an **LLM to generate an answer** using the **top-ranked documents** as context. |
+| **12. Apply content safety filters** | **Azure AI Content Safety** | Ensures the **AI-generated response** follows safety guidelines, filtering out **harmful or inappropriate content**. |
+| **13. Display response** | **Streamlit UI** | Shows **retrieved documents, scores, and final AI response**. |
 
 ---
 ## 🛠️ **Setup & Installation**  
@@ -96,6 +99,7 @@ ollama serve
 ollama pull qwen2.5:0.5b
 ollama pull gemma2:2b
 ollama pull bge-m3
+ollama pull jaluma/arabert-all-nli-triplet-matryoshka:latest # 
 ```
 
 ### **6️⃣ Run Azure AI Containers for Language Detection & NER**

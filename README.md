@@ -17,27 +17,19 @@ Powered by **Azure AI Containers**, it ensures **high-performance retrieval, acc
 
 ---
 
-## 🚀 How Azure AI Containers can Enhance Offline RAG System
+## 🔹 How Azure AI Containers Can Enhance your Offline RAG System
+Azure AI Containers enable advanced AI capabilities while keeping the system **fully offline and on-premise-ready**. These services improve **document processing, query understanding, and response generation**, making the system **more accurate, secure, and scalable**.
 
-Azure AI Containers enable **advanced AI capabilities** while keeping the system **fully offline and on-premise-ready**. 
-
-These services enhance **document processing, query understanding, and response generation**, making the system **more accurate, secure, and scalable**.
-
-### **Improving Document Processing & Indexing**
-- **Azure AI Vision - Read** → Extracts text from scanned documents & images, making PDFs and handwritten content searchable.  
-- **Document Intelligence** → Processes structured documents (invoices, contracts) before indexing, improving retrieval in legal and enterprise use cases.  
-
-### **Enhancing Query Understanding & Retrieval**
--  **Azure AI Language** → Detects **query language**
-- **Conversational Language Understanding (CLU)** → Classifies **query intent** (e.g., **search vs. summarization**) for smarter responses.  
-
-### **Enhancing AI-Generated Responses**
-- **Sentiment Analysis** → Adjusts AI response tone (formal/casual).  
-- **Text Translation** → Enables **cross-language retrieval** (Arabic query → English documents).  
-- **Neural Text-to-Speech** → Converts AI responses into voice for **future chatbot integrations**.  
-
-### **Ensuring Content Safety & Compliance**  
-- **Azure AI Content Safety** → Scans both **text and images** for **violence, hate speech, self-harm, and explicit content**, ensuring **AI-generated responses and retrieved documents comply with safety standards**.  
+| **Category**                          | **Azure AI Service**                                  | **Enhancement** |
+|--------------------------------------|-----------------------------------------------------|----------------|
+| **📄 Improving Document Processing & Indexing** | **Azure AI Vision - Read** | Extracts text from **scanned documents & images**, making PDFs and handwritten content searchable. |
+|                                      | **Azure Document Intelligence** | Processes **structured documents** (e.g., invoices, contracts) before indexing, improving retrieval in legal and enterprise use cases. |
+| **🔎 Enhancing Query Understanding & Retrieval** | **Azure AI Language** | Detects **query language** to route requests correctly. |
+|                                      | **Conversational Language Understanding (CLU)** | Classifies **query intent** (e.g., search vs. summarization) for smarter responses. |
+| **🤖 Enhancing AI-Generated Responses** | **Azure AI Sentiment Analysis** | Adjusts AI response **tone** (formal/casual) based on sentiment detection. |
+|                                      | **Azure AI Text Translation** | Enables **cross-language retrieval** (e.g., Arabic query → English documents). |
+|                                      | **Neural Text-to-Speech (TTS)** | Converts **AI responses into speech**, enabling chatbot and voice assistant integrations. |
+| **🛡️ Ensuring Content Safety & Compliance** | **Azure AI Content Safety** | Scans **both text and images** for **violence, hate speech, self-harm, and explicit content**, ensuring AI-generated responses and retrieved documents comply with safety standards. |
 
 🔹 **These integrations ensure the RAG system remains fully functional in offline environments while benefiting from enterprise-grade AI.**  
 

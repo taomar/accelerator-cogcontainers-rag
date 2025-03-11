@@ -99,10 +99,10 @@ ollama serve
 ollama pull qwen2.5:0.5b
 ollama pull gemma2:2b
 ollama pull bge-m3
-ollama pull jaluma/arabert-all-nli-triplet-matryoshka:latest # 
+ollama pull jaluma/arabert-all-nli-triplet-matryoshka:latest 
 ```
 
-### **6️⃣ Run Azure AI Containers for Language Detection & NER**
+### **6️⃣ Run Azure AI Containers for Language Detection**
 #### **Language Detection**
 ```bash
 docker run --rm -it --platform linux/amd64 -p 5000:5000 --memory 6g --cpus 2 \
@@ -151,26 +151,18 @@ Examples:
 - **English:** `"What is artificial intelligence?"`  
 - **Arabic:** `"ما هو الذكاء الاصطناعي؟"`
 
-The system will:
-1. **Detect query language using Azure AI**
-2. **Perform Named Entity Recognition (NER)**
-3. **Retrieve relevant documents from Qdrant**
-4. **Rank results using BM25 + embedding similarity + reranking**
-5. **Generate an AI response using Ollama**
-
 ---
-
 ## 📌 **Addressing Arabic Language Challenges**
 
 - 1️⃣ Challenge: Arabic Ranker Models**
 
-📌 **Problem:** Many ranker models struggle to reconstruct answers when the supporting information is scattered across multiple chunks.  
-✅ **Solution:** We integrate **BM25 + bge-m3 reranker**, which improves the ranking of relevant Arabic documents based on **semantic similarity and keyword matching**.
+**Problem:** Many ranker models struggle to reconstruct answers when the supporting information is scattered across multiple chunks.  
+**Solution:** We integrate **BM25 + bge-m3 reranker**, which improves the ranking of relevant Arabic documents based on **semantic similarity and keyword matching**.
 
 -  2️⃣ Challenge: Arabic Embedding Models**
 
-📌 **Problem:** Single-word Arabic queries sometimes fail to retrieve results, even when relevant content exists in the knowledge base.  
-✅ **Solution:** We use a **hybrid search approach**, combining:
+**Problem:** Single-word Arabic queries sometimes fail to retrieve results, even when relevant content exists in the knowledge base.  
+**Solution:** We use a **hybrid search approach**, combining:
    - **Vector search (Ollama embeddings)**
    - **BM25 keyword matching**
    - **Reranking using bge-m3**

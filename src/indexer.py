@@ -22,7 +22,7 @@ client = QdrantClient("localhost", port=6333)
 # Define embedding sizes based on language-specific models
 EMBEDDING_SIZES = {
     "en": 1024,  # English embeddings (bge-m3)
-    "ar": 768,   # Arabic embeddings (jaluma/arabert)
+    "ar": 1024,   # Arabic embeddings (bge-m3)
 }
 
 # ================================
@@ -78,7 +78,7 @@ def detect_language(text):
 
 def generate_embedding(text, language):
     """Generates embeddings using different models for Arabic & English."""
-    model_name = "jaluma/arabert-all-nli-triplet-matryoshka" if language == "ar" else "bge-m3"
+    model_name = "bge-m3" if language == "ar" else "bge-m3"
 
     response = ollama.embeddings(model=model_name, prompt=text)
     embedding = response["embedding"]

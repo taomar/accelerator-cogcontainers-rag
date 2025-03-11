@@ -18,7 +18,7 @@ client = QdrantClient("localhost", port=6333)
 # ✅ Define embedding sizes for models
 EMBEDDING_SIZES = {
     "english": 1024,  # bge-m3 (Optimized for retrieval)
-    "arabic": 1024,   # jaluma/arabert embeddings (Padded to match Qdrant)
+    "arabic": 1024,   # bge-m3 embeddings
 }
 
 # ✅ Azure AI Language API Endpoint
@@ -52,7 +52,7 @@ def detect_language(text):
 
 def generate_embedding(text, language):
     """Generates embeddings using different models for Arabic & English queries."""
-    model_name = "jaluma/arabert-all-nli-triplet-matryoshka" if language == "arabic" else "bge-m3"
+    model_name = "bge-m3" if language == "arabic" else "bge-m3"
     
     response = ollama.embeddings(model=model_name, prompt=text)
     embedding = response["embedding"]

@@ -9,28 +9,34 @@ import numpy as np
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct, VectorParams
 
+# ================================
+# 🔹 CONFIGURATION & INITIAL SETUP
+# ================================
+
 # Load API details from environment variables (.env)
 AZURE_LANGUAGE_API_URL = os.getenv("AZURE_LANGUAGE_API_URL", "http://localhost:5000/text/analytics/v3.1/languages")
 
-# Initialize Qdrant client
+# Initialize Qdrant client (local instance)
 client = QdrantClient("localhost", port=6333)
 
-# ✅ Correct embedding sizes based on the model
+# Define embedding sizes based on language-specific models
 EMBEDDING_SIZES = {
-    "en": 1024,  # bge-m3 (English)
-    "ar": 768,   # jaluma/arabert (Arabic)
+    "en": 1024,  # English embeddings (bge-m3)
+    "ar": 768,   # Arabic embeddings (jaluma/arabert)
 }
 
-# ✅ Ensure Qdrant collections exist with correct dimensions
+# ================================
+# 🔹 QDRANT COLLECTION SETUP
+# ================================
+
 for lang, vector_size in EMBEDDING_SIZES.items():
-    collection_name = f"rag_docs_{lang[:2]}"
+    collection_name = f"rag_docs_{lang[:2]}"  # 'rag_docs_ar' for Arabic, 'rag_docs_en' for English
 
     if client.collection_exists(collection_name):
         existing_collection_info = client.get_collection(collection_name)
 
-        # 🔹 Fix: Correct way to check vector size
+        # Ensure existing collection has the correct vector size
         existing_vector_size = existing_collection_info.config.params.vectors.size
-
         if existing_vector_size != vector_size:
             print(f"🚨 Collection `{collection_name}` has incorrect vector size ({existing_vector_size}). Deleting & recreating...")
             client.delete_collection(collection_name)
@@ -44,9 +50,12 @@ for lang, vector_size in EMBEDDING_SIZES.items():
 
 print("✅ Qdrant collections are now correctly set up!")
 
-# Function to detect language using Azure AI Language API
+# ================================
+# 🔹 LANGUAGE DETECTION FUNCTION
+# ================================
+
 def detect_language(text):
-    """Detects language using Azure AI Language API with improved error handling."""
+    """Detects language using Azure AI Language API with error handling."""
     payload = {"documents": [{"id": "1", "text": text}]}
     headers = {"Content-Type": "application/json"}
 
@@ -56,65 +65,73 @@ def detect_language(text):
 
         if "documents" in response_json and response_json["documents"]:
             detected_lang = response_json["documents"][0]["detectedLanguage"]["iso6391Name"]
-            if detected_lang == "ar":
-                return "ar"
-            elif detected_lang == "en":
-                return "en"
+            return "ar" if detected_lang == "ar" else "en"
 
     except Exception as e:
         print(f"⚠️ Language detection error: {e}")
 
     return "en"  # Default to English if detection fails
 
-# Function to generate embeddings using the correct model
+# ================================
+# 🔹 EMBEDDING GENERATION FUNCTION
+# ================================
 
 def generate_embedding(text, language):
     """Generates embeddings using different models for Arabic & English."""
     model_name = "jaluma/arabert-all-nli-triplet-matryoshka" if language == "ar" else "bge-m3"
+
     response = ollama.embeddings(model=model_name, prompt=text)
     embedding = response["embedding"]
 
-    # ✅ Fix: Ensure embedding size matches Qdrant (Arabic → 768, English → 1024)
+    # Ensure embeddings match Qdrant vector size
     expected_size = EMBEDDING_SIZES[language]
-    if len(embedding) != expected_size:
-        embedding = np.array(embedding[:expected_size])  # Truncate if larger
+    if len(embedding) < expected_size:
+        embedding = np.pad(embedding, (0, expected_size - len(embedding)), 'constant')
+    elif len(embedding) > expected_size:
+        embedding = embedding[:expected_size]  # Truncate if too large
 
-    return embedding  # ✅ FIXED: No `.tolist()`, since it's already a list
+    return embedding
 
-# Function to index document into Qdrant
+# ================================
+# 🔹 DOCUMENT INDEXING FUNCTION
+# ================================
 
 def index_document(text, lang):
-    """Indexes a document into Qdrant."""
+    """Indexes a document into Qdrant after generating embeddings."""
     embedding = generate_embedding(text, lang)
     if embedding is None:
         print(f"⚠️ Skipping indexing due to embedding error for text: {text[:30]}...")
         return
-    
-    collection_name = f"rag_docs_{lang[:2]}"
 
+    collection_name = f"rag_docs_{lang[:2]}"
     if not client.collection_exists(collection_name):
         print(f"⚠️ Collection `{collection_name}` not found! Skipping indexing...")
         return
 
     point = {
-        "id": str(uuid.uuid4()),
-        "vector": embedding,  # ✅ FIXED: Removed `.tolist()`, since it's already a list
+        "id": str(uuid.uuid4()),  # Unique UUID for each chunk
+        "vector": embedding,  # ✅ FIXED: Directly use the list (no `.tolist()`)
         "payload": {"text": text, "language": lang}
     }
+
     client.upsert(collection_name=collection_name, points=[point])
 
-# Function to chunk text
+# ================================
+# 🔹 TEXT CHUNKING FUNCTION
+# ================================
 
 def chunk_text(text, chunk_size=200):
-    """Splits text into smaller chunks for better retrieval."""
+    """Splits text into smaller chunks for better retrieval performance."""
     if not text.strip():
-        return []  # 🔹 Return an empty list if text is empty
+        return []  # Return an empty list if text is empty
     return textwrap.wrap(text, chunk_size)
 
-# Function to load documents from `data/` folder
+# ================================
+# 🔹 DOCUMENT LOADING FUNCTION
+# ================================
 
 def load_documents():
-    """Loads text, JSON, and CSV documents from the data folder."""
+    """Loads text, JSON, and CSV documents from the `data/` folder."""
     documents = []
 
     for file in os.listdir("data"):
@@ -151,14 +168,17 @@ def load_documents():
 
     return documents
 
-# Load and index documents
+# ================================
+# 🔹 INDEXING DOCUMENTS INTO QDRANT
+# ================================
+
 documents = load_documents()
 
 if not documents:
     print("⚠️ No documents to index. Exiting...")
     exit()
 
-# Store document chunks in Qdrant
+# Process each document and split into smaller chunks before indexing
 for doc in documents:
     if not doc.get("text"):
         print(f"⚠️ Skipping document with missing text: {doc}")

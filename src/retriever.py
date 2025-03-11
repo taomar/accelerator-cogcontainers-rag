@@ -1,31 +1,35 @@
-from qdrant_client import QdrantClient
-import ollama
-import re
-import numpy as np
-import requests
 import os
+import re
+import requests
+import ollama
+import numpy as np
 import nltk
+import string
+from qdrant_client import QdrantClient
 from rank_bm25 import BM25Okapi
 from nltk.tokenize import word_tokenize
-import string
 
+# Download required NLTK data
 nltk.download("punkt")
 
-# Initialize Qdrant client
+# ✅ Initialize Qdrant client
 client = QdrantClient("localhost", port=6333)
 
-# Embedding sizes for models
+# ✅ Define embedding sizes for models
 EMBEDDING_SIZES = {
     "english": 1024,  # bge-m3 (Optimized for retrieval)
     "arabic": 1024,   # jaluma/arabert embeddings (Padded to match Qdrant)
 }
 
-# API Endpoints
+# ✅ Azure AI Language API Endpoint
 AZURE_LANGUAGE_API_URL = "http://localhost:5000/text/analytics/v3.1/languages"
 
-# Function to detect language using Azure AI Language API
+# -----------------------------------------------
+# 🔹 Function: Detect Query Language
+# -----------------------------------------------
+
 def detect_language(text):
-    """Detects query language using Azure AI Language API."""
+    """Detects the language of a given query using Azure AI Language API."""
     payload = {"documents": [{"id": "1", "text": text}]}
     headers = {"Content-Type": "application/json"}
 
@@ -42,18 +46,19 @@ def detect_language(text):
 
     return "english"  # Default to English if detection fails
 
-# Function to generate embeddings
-import numpy as np
+# -----------------------------------------------
+# 🔹 Function: Generate Query Embeddings
+# -----------------------------------------------
 
 def generate_embedding(text, language):
-    """Generates embeddings using different models for Arabic & English."""
+    """Generates embeddings using different models for Arabic & English queries."""
     model_name = "jaluma/arabert-all-nli-triplet-matryoshka" if language == "arabic" else "bge-m3"
     
     response = ollama.embeddings(model=model_name, prompt=text)
     embedding = response["embedding"]
 
-    # ✅ Fix: Ensure embedding size matches Qdrant (Arabic → 768, English → 1024)
-    expected_size = 768 if language == "arabic" else 1024
+    # ✅ Fix: Ensure embedding size matches Qdrant expectations
+    expected_size = EMBEDDING_SIZES[language]
 
     # 🔹 Ensure embedding has the correct size
     if len(embedding) < expected_size:
@@ -61,18 +66,28 @@ def generate_embedding(text, language):
     elif len(embedding) > expected_size:
         embedding = embedding[:expected_size]  # Truncate if larger
 
-    return list(embedding)  # ✅ FIXED: No `.tolist()`, returning list directly
+    return list(embedding)  # ✅ FIXED: Returning as list directly
 
-# Function to tokenize text for BM25
+# -----------------------------------------------
+# 🔹 Function: Tokenize Text for BM25
+# -----------------------------------------------
+
 def tokenize_text(text, language):
     """Tokenizes input text for BM25 retrieval, handling Arabic separately."""
     if language == "arabic":
         return word_tokenize(text)  # Arabic tokenization (better for BM25)
     return [word.lower() for word in word_tokenize(text) if word not in string.punctuation]
 
-# Function to search documents with optimized retrieval
+# -----------------------------------------------
+# 🔹 Function: Search Documents with Hybrid Retrieval
+# -----------------------------------------------
+
 def search_documents(query, language):
-    """Retrieves documents using hybrid search (Vector + BM25)."""
+    """
+    Retrieves documents using hybrid search (Vector Similarity + BM25).
+    - **Vector Search**: Finds documents with semantic similarity.
+    - **BM25 Ranking**: Boosts based on exact keyword matches.
+    """
     query_vector = generate_embedding(query, language)
     collection_name = "rag_docs_ar" if language == "arabic" else "rag_docs_en"
 
@@ -82,7 +97,7 @@ def search_documents(query, language):
 
     print(f"🔎 Searching for query: {query} in collection: {collection_name}")
 
-    retrieved_docs = []  # ✅ Initialize the list before use
+    retrieved_docs = []  # ✅ Initialize the list
     seen_texts = set()   # ✅ Track unique document texts
 
     try:
@@ -106,7 +121,7 @@ def search_documents(query, language):
         print(f"⚠️ Vector search error: {e}")
         return []  # ✅ Return an empty list if retrieval fails
 
-    # ✅ Ensure retrieved_docs exists before filtering
+    # ✅ Apply BM25 Re-Ranking
     if retrieved_docs:
         try:
             corpus = [doc["text"] for doc in retrieved_docs]
@@ -128,18 +143,20 @@ def search_documents(query, language):
 
     return retrieved_docs  # ✅ Return the list safely
 
+# -----------------------------------------------
+# 🔹 Function: Clean AI Response & Apply Arabic Formatting
+# -----------------------------------------------
 
-# Function to clean AI responses and enforce proper Arabic formatting
 def clean_ai_response(text, language):
-    """Cleans AI response text and ensures proper right-to-left (RTL) formatting for Arabic."""
+    """Cleans AI-generated responses and ensures proper right-to-left (RTL) formatting for Arabic."""
 
     # Remove unwanted HTML tags
     text = re.sub(r'<.*?>', '', text)
 
     if language == "arabic":
-        # ✅ Ensure proper Arabic bullets (nested lists fix)
-        text = text.replace("•", "◼").replace("-", "◼")  # Fix unordered bullets
-        text = text.replace("  *", "◼").replace("*", "◼")  # Handle extra bullets
+        # ✅ Ensure proper Arabic bullets
+        text = text.replace("•", "◼").replace("-", "◼")  
+        text = text.replace("  *", "◼").replace("*", "◼")  
 
         # ✅ Convert numbers to Arabic numerals
         text = text.replace("1.", "١.").replace("2.", "٢.").replace("3.", "٣.").replace("4.", "٤.").replace("5.", "٥.")
@@ -150,11 +167,13 @@ def clean_ai_response(text, language):
 
     return text
 
-# Function to generate AI response
+# -----------------------------------------------
+# 🔹 Function: Generate AI Response
+# -----------------------------------------------
 
 def generate_response(query, max_length=512, temperature=0.9, top_k=40, repetition_penalty=1.0):
     """Generates a response using the appropriate LLM model based on detected language."""
-
+    
     language = detect_language(query)
     model_name = "gemma2:2b" if language == "arabic" else "qwen2.5:0.5b"
 

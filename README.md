@@ -118,7 +118,7 @@ curl -X POST "http://localhost:5000/text/analytics/v3.1/languages" \
 ### **7️⃣ Prepare & Index Documents**
 Store your dataset inside the `data/` folder, then run:
 ```bash
-python src/index_documents.py
+python src/indexer.py
 ```
 
 Verify if the Qdrant Collections Exist
@@ -134,7 +134,7 @@ curl -X DELETE "http://localhost:6333/collections/rag_docs_ar"
 
 ### **8️⃣ Start the Streamlit UI**
 ```bash
-streamlit run src/streamlit_app.py
+streamlit run src/app.py
 ```
 
 ### **9️⃣ Test Queries**

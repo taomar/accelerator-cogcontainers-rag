@@ -1,41 +1,46 @@
 # 🧠 AI-Powered RAG System 🔍  
 **Deployable Offline | On-Premise | Any Cloud**  
 
-This project showcases a **Retrieval-Augmented Generation (RAG) system** designed for **flexibility, scalability, and real-world deployment**. Powered by **Azure AI Containers**, it ensures **high-performance retrieval, accuracy, and security**—whether running **fully offline, on-premise, or in any cloud environment**.
+This project showcases a **Retrieval-Augmented Generation (RAG) system** designed for **flexibility, scalability, and real-world deployment**. 
+
+Powered by **Azure AI Containers**, it ensures **high-performance retrieval, accuracy, and security**—whether running **fully offline, on-premise, or in any cloud environment**.
 
 ## **Why This Matters?**
-✅ **Hybrid Retrieval**: Combines **Qdrant (vector search)**, **BM25 (keyword matching)**, and **Ollama embeddings** to enhance ranking and accuracy.  
-✅ **Multilingual AI**: Supports **Arabic & English** with optimized retrieval for short queries and complex prompts.  
-✅ **Azure AI Integration**: Leverages **Azure AI Containers** for ensuring **better accuracy, security, and usability**—even in offline environments.  
-✅ **On-Premise Ready**: Designed for **full offline deployment**, making it ideal for **customers needing secure, cloud-independent AI solutions**.  
 
-🚀 **Use this as a PoC to help customers deploy an enterprise-grade RAG system on-premise using Azure AI Containers.**  
+**Hybrid Retrieval**: Combines **Qdrant (vector search)**, **BM25 (keyword matching)**, and **Ollama embeddings** to enhance ranking and accuracy.  
 
-📌 **Learn More**: [Azure AI Containers](https://learn.microsoft.com/en-us/azure/ai-services/containers/disconnected-containers)  
+**Multilingual AI**: Supports **Arabic & English** with optimized retrieval for short queries and complex prompts.  
+
+**Azure AI Integration**: Leverages **Azure AI Containers** for ensuring **better accuracy, security, and usability**—even in offline environments.  
+
+**On-Premise Ready**: Designed for **full offline deployment**, making it ideal for **customers needing secure, cloud-independent AI solutions**.  
 
 ---
 
-## 🚀 How Azure AI Containers Enhance This Offline RAG System
+## 🚀 How Azure AI Containers can Enhance Offline RAG System
 
-Azure AI Containers enable **advanced AI capabilities** while keeping the system **fully offline and on-premise-ready**. These services enhance **document processing, query understanding, and response generation**, making the system **more accurate, secure, and scalable**.
+Azure AI Containers enable **advanced AI capabilities** while keeping the system **fully offline and on-premise-ready**. 
 
-### **1️⃣ Improving Document Processing & Indexing**
-✅ **Azure AI Vision - Read** → Extracts text from scanned documents & images, making PDFs and handwritten content searchable.  
-✅ **Document Intelligence** → Processes structured documents (invoices, contracts) before indexing, improving retrieval in legal and enterprise use cases.  
+These services enhance **document processing, query understanding, and response generation**, making the system **more accurate, secure, and scalable**.
 
-### **2️⃣ Enhancing Query Understanding & Retrieval**
-✅ **Azure AI Language** → Detects **query language**, extracts **key topics** (NER), and **summarizes** long results.  
-✅ **Conversational Language Understanding (CLU)** → Classifies **query intent** (e.g., **search vs. summarization**) for smarter responses.  
+### **1️ Improving Document Processing & Indexing**
+- **Azure AI Vision - Read** → Extracts text from scanned documents & images, making PDFs and handwritten content searchable.  
+- **Document Intelligence** → Processes structured documents (invoices, contracts) before indexing, improving retrieval in legal and enterprise use cases.  
 
-### **3️⃣ Enhancing AI-Generated Responses**
-✅ **Sentiment Analysis** → Adjusts AI response tone (formal/casual).  
-✅ **Text Translation** → Enables **cross-language retrieval** (Arabic query → English documents).  
-✅ **Neural Text-to-Speech** → Converts AI responses into voice for **future chatbot integrations**.  
+### **2️ Enhancing Query Understanding & Retrieval**
+-  **Azure AI Language** → Detects **query language**
+- **Conversational Language Understanding (CLU)** → Classifies **query intent** (e.g., **search vs. summarization**) for smarter responses.  
 
-### **4️⃣ Ensuring Content Safety & Compliance**  
-✅ **Azure AI Content Safety** → Scans both **text and images** for **violence, hate speech, self-harm, and explicit content**, ensuring **AI-generated responses and retrieved documents comply with safety standards**.  
+### **3️ Enhancing AI-Generated Responses**
+- **Sentiment Analysis** → Adjusts AI response tone (formal/casual).  
+- **Text Translation** → Enables **cross-language retrieval** (Arabic query → English documents).  
+- **Neural Text-to-Speech** → Converts AI responses into voice for **future chatbot integrations**.  
+
+### **4️ Ensuring Content Safety & Compliance**  
+- **Azure AI Content Safety** → Scans both **text and images** for **violence, hate speech, self-harm, and explicit content**, ensuring **AI-generated responses and retrieved documents comply with safety standards**.  
 
 🔹 **These integrations ensure the RAG system remains fully functional in offline environments while benefiting from enterprise-grade AI.**  
+
 📌 **Learn More**: [Azure AI Containers](https://learn.microsoft.com/en-us/azure/ai-services/cognitive-services-container-support)  
 📌 **Azure AI Content Safety**: [Content Safety Containers (Preview)](https://learn.microsoft.com/en-us/azure/ai-services/content-safety/how-to/containers/container-overview)  
 

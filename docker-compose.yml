@@ -38,49 +38,5 @@ services:
       timeout: 5s
       retries: 5
 
-  # azure-form-recognizer-read:
-  #   container_name: azure-form-recognizer-read
-  #   image: mcr.microsoft.com/azure-cognitive-services/form-recognizer/read-3.1
-  #   environment:
-  #     - EULA=accept
-  #     - billing=<document-intelligence-endpoint>
-  #     - apiKey=<document-intelligence-key>
-  #   ports:
-  #     - "5001:5000"
-  #   networks:
-  #     - ocrvnet
-
-  # textanalytics:
-  #   image: mcr.microsoft.com/azure-cognitive-services/textanalytics/summarization:cpu
-  #   environment:
-  #     - eula=accept
-  #     - rai_terms=accept
-  #     - billing=<language-endoint>
-  #     - apikey=<language-key> 
-  #   ports:
-  #     - "5002:5000"
-
-  # azure-ner:
-  #   image: mcr.microsoft.com/azure-cognitive-services/textanalytics/ner:latest
-  #   container_name: azure-ner
-  #   restart: unless-stopped
-  #   platform: linux/amd64
-  #   ports:
-  #     - "5001:5000"
-  #   environment:
-  #     - Eula=accept
-  #     - Billing=${AZURE_NER_BILLING_URL}
-  #     - ApiKey=${AZURE_NER_API_KEY}
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         memory: 6g
-  #         cpus: "2"
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:5001/status"]
-  #     interval: 30s
-  #     timeout: 5s
-  #     retries: 5
-
 volumes:
   qdrant_data:

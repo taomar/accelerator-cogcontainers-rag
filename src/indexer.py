@@ -67,6 +67,7 @@ def detect_language(text):
     return "en"  # Default to English if detection fails
 
 # Function to generate embeddings using the correct model
+
 def generate_embedding(text, language):
     """Generates embeddings using different models for Arabic & English."""
     model_name = "jaluma/arabert-all-nli-triplet-matryoshka" if language == "ar" else "bge-m3"
@@ -81,6 +82,7 @@ def generate_embedding(text, language):
     return embedding  # ✅ FIXED: No `.tolist()`, since it's already a list
 
 # Function to index document into Qdrant
+
 def index_document(text, lang):
     """Indexes a document into Qdrant."""
     embedding = generate_embedding(text, lang)
@@ -102,6 +104,7 @@ def index_document(text, lang):
     client.upsert(collection_name=collection_name, points=[point])
 
 # Function to chunk text
+
 def chunk_text(text, chunk_size=200):
     """Splits text into smaller chunks for better retrieval."""
     if not text.strip():
@@ -109,6 +112,7 @@ def chunk_text(text, chunk_size=200):
     return textwrap.wrap(text, chunk_size)
 
 # Function to load documents from `data/` folder
+
 def load_documents():
     """Loads text, JSON, and CSV documents from the data folder."""
     documents = []

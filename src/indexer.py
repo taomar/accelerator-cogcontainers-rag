@@ -159,7 +159,13 @@ def index_document(text: str, filename: str = None) -> None:
                 vector=embedding,
                 payload={
                     "text": chunk["text"],
-                    "metadata": chunk["metadata"]
+                    "metadata": {
+                        "source": filename or "Unknown",
+                        "chunk_id": chunk["metadata"]["chunk_id"],
+                        "total_chunks": chunk["metadata"]["total_chunks"],
+                        "language": chunk["metadata"]["language"],
+                        "key_phrases": chunk["metadata"].get("key_phrases", [])
+                    }
                 }
             ))
         

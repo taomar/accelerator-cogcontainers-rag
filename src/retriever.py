@@ -98,28 +98,29 @@ def search_documents(query, language):
     print(f"🔎 Searching for query: {query} in collection: {collection_name}")
 
     retrieved_docs = []  # ✅ Initialize the list
-    seen_texts = set()   # ✅ Track unique document texts
+    seen_texts = set()
 
     try:
         vector_results = client.search(
             collection_name=collection_name,
             query_vector=query_vector,
             limit=20,  # Retrieve more docs to improve ranking
-            with_payload=True
+            with_payload=True,
+            with_vectors=True
         )
 
         # ✅ Populate retrieved_docs properly
         for hit in vector_results:
-            doc_text = hit.payload["text"]
+            doc_text = hit.payload.get("text", "")
             if doc_text not in seen_texts:
                 retrieved_docs.append({
                     "text": doc_text,
                     "score": hit.score,
-                    "source": hit.payload.get("source", "Unknown"),
-                    "chunk_id": hit.payload.get("chunk_id", 0),
-                    "total_chunks": hit.payload.get("total_chunks", 1),
-                    "language": hit.payload.get("language", "unknown"),
-                    "key_phrases": hit.payload.get("key_phrases", [])
+                    "source": hit.payload.get("metadata", {}).get("source", "Unknown"),
+                    "chunk_id": hit.payload.get("metadata", {}).get("chunk_id", 0),
+                    "total_chunks": hit.payload.get("metadata", {}).get("total_chunks", 1),
+                    "language": hit.payload.get("metadata", {}).get("language", language),
+                    "key_phrases": hit.payload.get("metadata", {}).get("key_phrases", [])
                 })
                 seen_texts.add(doc_text)
 

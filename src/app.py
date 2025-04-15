@@ -141,6 +141,11 @@ if st.button("🔍 Search", use_container_width=True):
                 # Detect language automatically
                 language = detect_language(query)
                 
+                # Show detected language with appropriate emoji
+                lang_emoji = "🇬🇧" if language == "english" else "🇸🇦"
+                lang_display = "English" if language == "english" else "Arabic"
+                st.info(f"{lang_emoji} Detected Language: {lang_display}")
+                
                 # Search for relevant documents
                 results = search_documents(query, language)
                 
@@ -154,11 +159,15 @@ if st.button("🔍 Search", use_container_width=True):
                     # Display sources below the response
                     st.subheader("📚 Sources")
                     for i, doc in enumerate(results, 1):
+                        source_name = doc.get('source', 'Unknown').split('/')[-1] if doc.get('source') else 'Unknown'
+                        lang_emoji = "🇬🇧" if doc.get('language') == "english" else "🇸🇦"
+                        lang_display = doc.get('language', 'unknown').capitalize()
+                        
                         with st.expander(f"Source {i} (Relevance: {doc['score']:.2f})"):
-                            st.write(f"**Document:** {doc['source']}")
-                            st.write(f"**Language:** {doc['language']}")
-                            st.write(f"**Relevant Content:**")
-                            st.markdown(f"```\n{doc['text']}\n```")
+                            st.write(f"**Document:** {source_name}")
+                            st.write(f"**Language:** {lang_emoji} {lang_display}")
+                            st.write("**Relevant Content:**")
+                            st.markdown(f"```\n{doc.get('text', 'No content available')}\n```")
                 else:
                     st.warning("No relevant documents found. Try rephrasing your question or loading more documents.")
             except Exception as e:

@@ -112,7 +112,15 @@ def search_documents(query, language):
         for hit in vector_results:
             doc_text = hit.payload["text"]
             if doc_text not in seen_texts:
-                retrieved_docs.append({"text": doc_text, "score": hit.score})
+                retrieved_docs.append({
+                    "text": doc_text,
+                    "score": hit.score,
+                    "source": hit.payload.get("source", "Unknown"),
+                    "chunk_id": hit.payload.get("chunk_id", 0),
+                    "total_chunks": hit.payload.get("total_chunks", 1),
+                    "language": hit.payload.get("language", "unknown"),
+                    "key_phrases": hit.payload.get("key_phrases", [])
+                })
                 seen_texts.add(doc_text)
 
         print(f"🔹 Retrieved {len(retrieved_docs)} unique documents")
@@ -175,7 +183,7 @@ def generate_response(query, max_length=512, temperature=0.9, top_k=40, repetiti
     """Generates a response using the appropriate LLM model based on detected language."""
     
     language = detect_language(query)
-    model_name = "gemma2:2b" if language == "arabic" else "qwen2.5:0.5b"
+    model_name = "phi4-mini:3.8b" if language == "arabic" else "gemma3:1b"
 
     if language == "arabic":
         prompt = f"""

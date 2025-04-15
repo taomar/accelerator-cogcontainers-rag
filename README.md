@@ -100,7 +100,7 @@ ollama pull bge-m3
 ollama pull jaluma/arabert-all-nli-triplet-matryoshka:latest 
 ```
 
-### **6️⃣ Run Azure AI Containers for Language Detection**
+### **6️⃣ Run Azure AI Containers**
 #### **Language Detection**
 ```bash
 docker run --rm -it --platform linux/amd64 -p 5000:5000 --memory 6g --cpus 2 \
@@ -120,6 +120,22 @@ curl -X POST "http://localhost:5000/text/analytics/v3.1/languages" \
           ]
         }'
 ```
+
+#### **NER**
+```bash 
+docker run --rm -it -p 5000:5000 --memory 8g --cpus 1 \
+mcr.microsoft.com/azure-cognitive-services/textanalytics/ner:latest \
+Eula=accept \
+Billing={AZURE_LANGUAGE_BILLING_URL} \
+ApiKey={AZURE_LANGUAGE_KEY}
+
+
+```
+
+```bash 
+curl -X POST "http://localhost:5000/text/analytics/v3.1/entities/recognition/general" -H "Content-Type: application/json" -H "Ocp-Apim-Subscription-Key: ${AZURE_LANGUAGE_KEY}" -d '{"documents":[{"id":"1","text":"Microsoft was founded by Bill Gates and Paul Allen in 1975. The company is headquartered in Redmond, Washington."}]}'
+```
+
 
 ### **7️⃣ Prepare & Index Documents**
 Store your dataset inside the `data/` folder, then run:

@@ -2,147 +2,180 @@ import streamlit as st
 from retriever import generate_response, search_documents, detect_language
 from indexer import index_document
 import ollama
+import os
+from dotenv import load_dotenv
+from indexer import load_documents
+
+# Load environment variables
+load_dotenv()
 
 # 🎨 Streamlit UI Setup
-st.set_page_config(page_title="AI-Powered RAG System", layout="wide")
+st.set_page_config(
+    page_title="Edge RAG",
+    page_icon="🔍",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 # 🌍 Header
-st.markdown("<h1 style='text-align: center;'>🔍 AI-Powered RAG System</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>🔍 Edge RAG Search</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center;'>Powered by Azure AI Containers to run this RAG system offline or on premise and enhance accuracy, retrieval, and insights.</p>", unsafe_allow_html=True)
 
+# Initialize session state
+if 'documents_indexed' not in st.session_state:
+    st.session_state.documents_indexed = False
+if 'last_query' not in st.session_state:
+    st.session_state.last_query = None
 
-# 🏗️ First Row: Upload, Query Input, and Generation Parameters
-col_upload, col_query, col_params = st.columns([1.2, 1.5, 1.3])
-
-with col_upload:
-    st.subheader("📂 Upload a Document")
-    uploaded_file = st.file_uploader("Upload (TXT, JSON, CSV)", type=["txt", "json", "csv"])
-
-    if uploaded_file:
-        st.success(f"✅ Uploaded: {uploaded_file.name}")
-        file_contents = uploaded_file.read().decode("utf-8")
-        lang = detect_language(file_contents[:200])
-        index_document(file_contents)
-        st.info(f"📄 Indexed in `{lang}` language!")
-
-    # 📥 Sample Download
-    sample_text = "Sample English text.\n\nيمكنك أيضًا اختبار مستند باللغة العربية."
-    st.download_button("📥 Download Sample", sample_text, file_name="sample_doc.txt")
-
-with col_query:
-    st.subheader("💬 Query Input")
-    language_option = st.selectbox("🌍 Language:", ["Auto-Detect", "Arabic", "English"])
-    query_text = st.text_area("Enter your query:", placeholder="Type your question here...")
-
-    # 🔎 Search & Generate Button
-    if st.button("🚀 Search & Generate"):
-        if query_text:
-            language = detect_language(query_text) if language_option == "Auto-Detect" else language_option.lower()
-            retrieved_docs = search_documents(query_text, language)
-
-            st.session_state["query_text"] = query_text
-            st.session_state["retrieved_docs"] = retrieved_docs
-            st.session_state["language"] = language
-
-with col_params:
-    st.subheader("🎛️ Generation Parameters")
-    max_length = st.slider("Max Length", 50, 1024, 256)
-    temperature = st.slider("Temperature", 0.0, 2.0, 0.7)
-    top_k = st.slider("Top-k", 1, 100, 50)
-    repetition_penalty = st.slider("Repetition Penalty", 0.0, 2.0, 1.2)
-
-    st.session_state["generation_params"] = {
-        "max_length": max_length,
-        "temperature": temperature,
-        "top_k": top_k,
-        "repetition_penalty": repetition_penalty,
+# Custom CSS for better UI
+st.markdown("""
+<style>
+    .stButton>button {
+        width: 100%;
+        margin: 5px 0;
     }
+    .stTextInput>div>div>input {
+        font-size: 16px;
+    }
+    .stMarkdown {
+        margin-bottom: 1rem;
+    }
+    .info-box {
+        background-color: #f0f2f6;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin: 1rem 0;
+    }
+    /* Hide the map container and duplicate title */
+    .element-container:has(iframe),
+    .element-container:has(> div > .stMarkdown:first-child h1) {
+        display: none !important;
+    }
+    /* Remove extra padding */
+    .block-container {
+        padding-top: 2rem;
+    }
+    /* Adjust title spacing */
+    h1 {
+        margin-bottom: 1rem !important;
+    }
+    /* Hide the map container */
+    [data-testid="stDecoration"] {
+        display: none;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-# 🏗️ Second Row: Retrieved Docs & AI Response
-col_retrieved, col_ai = st.columns(2)
+# Sidebar
+with st.sidebar:
+    st.title("📄 Document Management")
+    
+    # Document Upload Section
+    st.subheader("Upload Documents")
+    uploaded_file = st.file_uploader(
+        "Choose a file",
+        type=['txt', 'pdf', 'docx', 'json', 'csv'],
+        help="Supported formats: TXT, PDF, DOCX, JSON, CSV"
+    )
+    
+    if uploaded_file:
+        with st.spinner("Processing document..."):
+            try:
+                # Save uploaded file temporarily
+                temp_path = f"temp_{uploaded_file.name}"
+                with open(temp_path, "wb") as f:
+                    f.write(uploaded_file.getvalue())
+                
+                # Index the document
+                index_document(temp_path)
+                st.success("✅ Document indexed successfully!")
+                st.session_state.documents_indexed = True
+                
+                # Clean up temporary file
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
+            except Exception as e:
+                st.error(f"❌ Error indexing document: {str(e)}")
 
-with col_retrieved:
-    st.subheader("📄 Retrieved Documents")
-    retrieved_docs = st.session_state.get("retrieved_docs", [])
+    # Load Documents Button
+    if st.button("📂 Load Sample Documents", help="Load pre-indexed sample documents about AI in healthcare"):
+        with st.spinner("Loading documents..."):
+            try:
+                load_documents()
+                st.success("✅ Documents loaded successfully!")
+                st.session_state.documents_indexed = True
+            except Exception as e:
+                st.error(f"❌ Error loading documents: {str(e)}")
 
-    if retrieved_docs:
-        for idx, doc in enumerate(retrieved_docs):  # ✅ Removed [:5] to show all
-            st.markdown(f"**{idx + 1}.** {doc['text']} _(Score: {doc['score']:.2f})_")
-    else:
-        st.warning("⚠️ No relevant documents found!")
-
-with col_ai:
-    st.subheader("🤖 AI Response")
-    if "query_text" in st.session_state:
-        ai_response = generate_response(
-            st.session_state["query_text"],
-            max_length=st.session_state["generation_params"]["max_length"],
-            temperature=st.session_state["generation_params"]["temperature"],
-            top_k=st.session_state["generation_params"]["top_k"],
-            repetition_penalty=st.session_state["generation_params"]["repetition_penalty"]
-        )
-
-        language = st.session_state.get("language", "english")
-
-        # ✅ Improved Arabic Formatting
-        if language == "arabic":
-            formatted_response = ai_response.replace("**", "<b>").replace("\n", "<br>")  # Convert markdown to HTML
-            wrapped_response = f"""
-            <div dir="rtl" style="
-                text-align: right;
-                direction: rtl;
-                unicode-bidi: embed;
-                font-size: 18px;
-                line-height: 2;
-                font-family: Arial, sans-serif;
-                padding: 15px;
-                background-color: #2a2a2a;
-                border-radius: 8px;
-                color: white;
-                border: 1px solid #444;
-                ">
-                {formatted_response}
-            </div>
-            """
-            st.markdown(wrapped_response, unsafe_allow_html=True)
-        else:
-            # ✅ Standard Markdown Rendering for English
-            st.markdown(ai_response, unsafe_allow_html=True)
-
-# 🏗️ Third Row: Example Prompts & System Information
-col_prompts, col_info = st.columns(2)
-
-with col_prompts:
-    st.subheader("📝 Example Prompts")
-
-    example_prompts = [
-        # English Prompts (Indexed ✅)
-        ("What are the key benefits of artificial intelligence in healthcare?", True),
-        ("How does AI improve disease diagnostics and patient care?", True),
-
-        # Arabic Prompts (Indexed ✅)
-        ("ما هي الفوائد الرئيسية للذكاء الاصطناعي في الرعاية الصحية؟", True),
-        ("كيف يساعد الذكاء الاصطناعي في تشخيص الأمراض وتحسين رعاية المرضى؟", True),
-
-        # English Prompts (Not Indexed ❌)
-        ("What is the impact of AI on job automation and future employment?", False),
-        ("How can AI improve supply chain efficiency in manufacturing?", False),
-
-        # Arabic Prompts (Not Indexed ❌)
-        ("ما هو تأثير الذكاء الاصطناعي على التشغيل الآلي للوظائف ومستقبل التوظيف؟", False),
-        ("كيف يمكن للذكاء الاصطناعي تحسين كفاءة سلاسل التوريد في التصنيع؟", False),
-    ]
-
-    for prompt, is_indexed in example_prompts:
-        indexed_label = "✅ Indexed" if is_indexed else "❌ Not Indexed"
-        st.markdown(f"**{indexed_label}:** {prompt}")
-
-with col_info:
-    st.subheader("ℹ️ System Information")
+    # Models Information
+    st.title("🤖 System Information")
     st.markdown("""
-    - **Retrieval Method**: Hybrid (Vector Search + BM25)  
-    - **Vector Database**: [Qdrant](https://qdrant.tech/)  
-    - **Embedding Models**: `bge-m3 for English & Arabic  
-    - **LLM Models**: `gemma2:2b` (Arabic) & `qwen2.5:0.5b` (English)  
-    - **Azure AI Containers**: better accuracy, security, and usability 
+    ### Models
+    - **Embedding**: `bge-m3` (English & Arabic)
+    - **Response Generation**: 
+        - English: `gemma3:1b`
+        - Arabic: `phi4-mini:3.8b`
+    - **Database**: Qdrant + BM25
+
+    ### Azure AI Services
+    - **Language Detection**: Azure Language Service
+    - **Named Entity Recognition**: Azure NER Service
+    - **Content Safety**: Azure Content Safety
+    - **Document Intelligence**: Azure Document Intelligence
     """)
+
+# Main Content
+
+# Search Input
+query = st.text_input(
+    "Ask a question about AI:",
+    placeholder="e.g., What are the benefits of AI in healthcare?",
+    key="search_input"
+)
+
+# Search Button
+if st.button("🔍 Search", use_container_width=True):
+    if query:
+        with st.spinner("Searching through documents..."):
+            try:
+                # Detect language automatically
+                language = detect_language(query)
+                
+                # Search for relevant documents
+                results = search_documents(query, language)
+                
+                if results:
+                    # Generate AI response first
+                    with st.spinner("Generating response..."):
+                        response = generate_response(query, results)
+                        st.subheader("🤖 AI Response")
+                        st.write(response)
+                    
+                    # Display sources below the response
+                    st.subheader("📚 Sources")
+                    for i, doc in enumerate(results, 1):
+                        with st.expander(f"Source {i} (Relevance: {doc['score']:.2f})"):
+                            st.write(f"**Document:** {doc['source']}")
+                            st.write(f"**Language:** {doc['language']}")
+                            st.write(f"**Relevant Content:**")
+                            st.markdown(f"```\n{doc['text']}\n```")
+                else:
+                    st.warning("No relevant documents found. Try rephrasing your question or loading more documents.")
+            except Exception as e:
+                st.error(f"An error occurred: {str(e)}")
+    else:
+        st.warning("Please enter a question to search.")
+
+# Example Prompts
+st.subheader("💡 Example Questions")
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown("**English:**")
+    st.markdown("- What are the key benefits of AI in healthcare?")
+    st.markdown("- How does AI improve disease diagnostics?")
+
+with col2:
+    st.markdown("**Arabic:**")
+    st.markdown("- ما هي فوائد الذكاء الاصطناعي في الرعاية الصحية؟")
+    st.markdown("- كيف يساعد الذكاء الاصطناعي في تشخيص الأمراض؟")

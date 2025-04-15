@@ -1,8 +1,9 @@
-ollama
-qdrant-client
-faiss-cpu  # Optional for local vector search
-semantic-kernel
+ollama # this is for the embedding / response model
+qdrant-client # this is for the vector search
+semantic-kernel 
 streamlit  # Optional for a simple UI
-rank-bm25
-nltk
-farasa
+rank-bm25 # this is for the embedding model
+nltk # this is for the language detection
+farasa # this is for the language detection
+sentence-transformers # this is for the embedding model
+python-magic # this is for the file type detection

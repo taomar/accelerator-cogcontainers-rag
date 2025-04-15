@@ -31,63 +31,6 @@ if 'last_query' not in st.session_state:
 with st.sidebar:
     st.title("📄 Document Management")
     
-    # Tech Stack Information
-    st.markdown("### 🛠️ Tech Stack")
-    
-    # Vector Database
-    st.markdown("#### 🔍 Vector Database")
-    st.markdown("""
-    - **Qdrant**: High-performance vector similarity search
-    - **Features**:
-        - Hybrid search (vector + keyword)
-        - Multi-language support
-        - Real-time indexing
-    """)
-    
-    # Embeddings
-    st.markdown("#### 🧠 Embeddings")
-    st.markdown("""
-    - **bge-m3**: State-of-the-art embedding model
-    - **Capabilities**:
-        - 1024-dimensional vectors
-        - Optimized for retrieval
-        - Cross-lingual support
-    """)
-    
-    # LLM
-    st.markdown("#### 🤖 Language Models")
-    st.markdown("""
-    - **Ollama**:
-        - English: gemma3:1b
-        - Arabic: phi4-mini:3.8b
-    - **Features**:
-        - Context-aware responses
-        - Multi-turn conversations
-        - Language-specific optimizations
-    """)
-    
-    # Azure AI Services
-    st.markdown("#### ⚡ Azure AI Services")
-    st.markdown("""
-    - **Language Service**:
-        - Language detection
-        - Named Entity Recognition (NER)
-        - High accuracy (>99% confidence)
-    """)
-    
-    # Language Support
-    st.markdown("### 🌍 Language Support")
-    st.markdown("""
-    - **English** 🇬🇧
-        - Full semantic search
-        - Entity recognition
-        - Context-aware responses
-    - **Arabic** 🇸🇦
-        - Native language support
-        - Arabic-specific embeddings
-        - Cultural context awareness
-    """)
-    
     # Document Upload Section
     st.subheader("Upload Documents")
     uploaded_file = st.file_uploader(
@@ -124,6 +67,29 @@ with st.sidebar:
                 st.session_state.documents_indexed = True
             except Exception as e:
                 st.error(f"❌ Error loading documents: {str(e)}")
+    
+    # Tech Stack Information
+    st.markdown("### 🛠️ Tech Stack")
+    st.markdown("""
+    - 🔍 **Vector DB**: 
+        - Qdrant
+    - 🧠 **Embeddings**: 
+        - bge-m3
+    - 🤖 **LLM**: 
+        - Arabic: gemma3:1b
+        - English: phi4-mini:3.8b
+    - ⚡ **Azure AI Disconnected Containers**: 
+        - Language Detection 
+        - Named Entity Recognition (NER) 
+        - Text Analytics 
+    """)
+    
+    # Language Support
+    st.markdown("### 🌍 Language Support")
+    st.markdown("""
+    - **English** 🇬🇧
+    - **Arabic** 🇸🇦
+    """)
 
 # Main Content
 

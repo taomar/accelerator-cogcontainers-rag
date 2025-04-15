@@ -8,6 +8,10 @@ import string
 from qdrant_client import QdrantClient
 from rank_bm25 import BM25Okapi
 from nltk.tokenize import word_tokenize
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Download required NLTK data
 nltk.download("punkt")
@@ -21,26 +25,53 @@ EMBEDDING_SIZES = {
     "arabic": 1024,   # bge-m3 embeddings
 }
 
-# ✅ Azure AI Language API Endpoint
-AZURE_LANGUAGE_API_URL = "http://localhost:5000/text/analytics/v3.1/languages"
+# ✅ Azure AI Language Service Configuration
+AZURE_LANGUAGE_ENDPOINT = os.getenv("AZURE_LANGUAGE_ENDPOINT")
+AZURE_LANGUAGE_KEY = os.getenv("AZURE_LANGUAGE_KEY")
+
+if not AZURE_LANGUAGE_ENDPOINT or not AZURE_LANGUAGE_KEY:
+    raise ValueError("Azure Language Service configuration missing. Please set AZURE_LANGUAGE_ENDPOINT and AZURE_LANGUAGE_KEY environment variables.")
 
 # -----------------------------------------------
 # 🔹 Function: Detect Query Language
 # -----------------------------------------------
 
 def detect_language(text):
-    """Detects the language of a given query using Azure AI Language API."""
-    payload = {"documents": [{"id": "1", "text": text}]}
-    headers = {"Content-Type": "application/json"}
+    """Detects the language of a given query using Azure Language Service."""
+    
+    # Remove trailing slash if present and add the correct path
+    base_endpoint = AZURE_LANGUAGE_ENDPOINT.rstrip('/')
+    endpoint = f"{base_endpoint}/text/analytics/v3.1/languages"
+    
+    print(f"Using endpoint: {endpoint}")  # Debug print
+    
+    headers = {
+        "Ocp-Apim-Subscription-Key": AZURE_LANGUAGE_KEY,
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+        "documents": [{
+            "id": "1",
+            "text": text
+        }]
+    }
 
     try:
-        response = requests.post(AZURE_LANGUAGE_API_URL, json=payload, headers=headers)
+        print("Making request to Azure...")  # Debug print
+        response = requests.post(endpoint, headers=headers, json=payload)
+        print(f"Response status: {response.status_code}")  # Debug print
+        response.raise_for_status()
         response_json = response.json()
+        print(f"Response JSON: {response_json}")  # Debug print
 
         if "documents" in response_json and response_json["documents"]:
             detected_lang = response_json["documents"][0]["detectedLanguage"]["iso6391Name"]
             return "arabic" if detected_lang == "ar" else "english"
 
+    except requests.exceptions.RequestException as e:
+        print(f"⚠️ Azure Language API error: {e}")
+        print(f"Response content: {getattr(e.response, 'text', 'No response content')}")  # Debug print
     except Exception as e:
         print(f"⚠️ Language detection error: {e}")
 

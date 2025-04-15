@@ -9,7 +9,7 @@ import numpy as np
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct, VectorParams
 from dotenv import load_dotenv
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 # Load environment variables
 load_dotenv()
@@ -26,6 +26,13 @@ LANGUAGE_API_KEY = os.getenv("LANGUAGE_API_KEY")
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "1000"))
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", "10"))
 
+# Azure Language Service Configuration
+AZURE_LANGUAGE_ENDPOINT = os.getenv("AZURE_LANGUAGE_ENDPOINT")
+AZURE_LANGUAGE_KEY = os.getenv("AZURE_LANGUAGE_KEY")
+
+if not AZURE_LANGUAGE_ENDPOINT or not AZURE_LANGUAGE_KEY:
+    raise ValueError("Azure Language Service configuration missing. Please set AZURE_LANGUAGE_ENDPOINT and AZURE_LANGUAGE_KEY environment variables.")
+
 # Initialize Qdrant client
 client = QdrantClient(
     url=QDRANT_URL,
@@ -39,21 +46,19 @@ EMBEDDING_SIZE = 1024  # Both English & Arabic use bge-m3 (same dimension)
 # 🔹 QDRANT COLLECTION SETUP
 # ================================
 
-def create_collection_if_not_exists(collection_name: str) -> None:
-    """Create a collection if it doesn't exist."""
-    try:
-        client.get_collection(collection_name)
-    except Exception:
+def create_collection_if_not_exists(client: QdrantClient, collection_name: str, vector_size: int = 1024) -> None:
+    """Creates a collection if it doesn't exist."""
+    if not client.collection_exists(collection_name):
         client.create_collection(
             collection_name=collection_name,
-            vectors_config=VectorParams(size=EMBEDDING_SIZE, distance="Cosine"),
+            vectors_config=VectorParams(size=vector_size, distance="cosine")
         )
         print(f"Created new collection '{collection_name}'")
 
 # Create collections for both languages
 for lang in ["en", "ar"]:
     collection_name = f"rag_docs_{lang}"
-    create_collection_if_not_exists(collection_name)
+    create_collection_if_not_exists(client, collection_name)
 
 print("✅ Qdrant collections are now correctly set up!")
 
@@ -62,35 +67,42 @@ print("✅ Qdrant collections are now correctly set up!")
 # ================================
 
 def detect_language(text: str) -> str:
-    """Detects language using Azure AI Language API with robust error handling."""
+    """Detects the language of a given text using Azure Language Service."""
     try:
-        response = requests.post(
-            LANGUAGE_DETECTION_URL,
-            headers={
-                "Content-Type": "application/json",
-                "Ocp-Apim-Subscription-Key": LANGUAGE_API_KEY
-            },
-            json={
-                "documents": [
-                    {
-                        "id": "1",
-                        "text": text
-                    }
-                ]
-            }
-        )
+        # Remove trailing slash if present and add the correct path
+        base_endpoint = AZURE_LANGUAGE_ENDPOINT.rstrip('/')
+        endpoint = f"{base_endpoint}/text/analytics/v3.1/languages"
+        
+        headers = {
+            "Ocp-Apim-Subscription-Key": AZURE_LANGUAGE_KEY,
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "documents": [{
+                "id": "1",
+                "text": text
+            }]
+        }
+
+        response = requests.post(endpoint, headers=headers, json=payload)
         response.raise_for_status()
+        
         result = response.json()
-        return result["documents"][0]["detectedLanguage"]["iso6391Name"]
+        if "documents" in result and result["documents"]:
+            detected_lang = result["documents"][0]["detectedLanguage"]["iso6391Name"]
+            return "arabic" if detected_lang == "ar" else "english"
+            
     except Exception as e:
         print(f"Error detecting language: {e}")
-        return "unknown"
+    
+    return "english"  # Default to English if detection fails
 
 # ================================
 # 🔹 EMBEDDING GENERATION FUNCTION
 # ================================
 
-def generate_embedding(text: str) -> List[float]:
+def generate_embedding(text: str, language: str) -> List[float]:
     """Generates embeddings using bge-m3 for both Arabic & English."""
     try:
         response = ollama.embeddings(model="bge-m3", prompt=text)
@@ -137,47 +149,45 @@ def process_document(text: str, filename: str = None) -> List[Dict[str, Any]]:
 # 🔹 DOCUMENT INDEXING FUNCTION
 # ================================
 
-def index_document(text: str, filename: str = None) -> None:
+def index_document(text: str, filename: str) -> None:
     """Index a document into Qdrant."""
-    # Process the document
-    processed_chunks = process_document(text, filename)
+    client = QdrantClient("localhost", port=6333)
     
-    # Index in batches
-    for i in range(0, len(processed_chunks), BATCH_SIZE):
-        batch = processed_chunks[i:i + BATCH_SIZE]
-        
-        # Prepare points for batch upload
-        points = []
-        for chunk in batch:
-            # Generate embedding
-            embedding = generate_embedding(chunk["text"])
-            if embedding is None:
-                continue
-            
-            points.append(PointStruct(
-                id=str(uuid.uuid4()),
-                vector=embedding,
-                payload={
-                    "text": chunk["text"],
-                    "metadata": {
-                        "source": filename or "Unknown",
-                        "chunk_id": chunk["metadata"]["chunk_id"],
-                        "total_chunks": chunk["metadata"]["total_chunks"],
-                        "language": chunk["metadata"]["language"],
-                        "key_phrases": chunk["metadata"].get("key_phrases", [])
-                    }
-                }
-            ))
-        
-        # Upload batch to Qdrant
-        if points:
-            collection_name = f"rag_docs_{chunk['metadata']['language']}"
-            client.upsert(
-                collection_name=collection_name,
-                points=points
-            )
+    # Create collections for both languages if they don't exist
+    create_collection_if_not_exists(client, "rag_docs_en")
+    create_collection_if_not_exists(client, "rag_docs_ar")
+    print("✅ Qdrant collections are now correctly set up!")
     
-    print(f"Indexed {len(processed_chunks)} chunks from {filename or 'text'}")
+    # Process the document into chunks
+    chunks = process_document(text, filename)
+    
+    # Prepare points for each language collection
+    en_points = []
+    ar_points = []
+    
+    for i, chunk in enumerate(chunks):
+        language = chunk["metadata"]["language"]
+        embedding = generate_embedding(chunk["text"], language)
+        
+        point = PointStruct(
+            id=i,
+            vector=embedding,
+            payload={
+                "text": chunk["text"],
+                "metadata": chunk["metadata"]
+            }
+        )
+        
+        if language == "arabic":
+            ar_points.append(point)
+        else:
+            en_points.append(point)
+    
+    # Batch upsert points for each language
+    if en_points:
+        client.upsert(collection_name="rag_docs_en", points=en_points)
+    if ar_points:
+        client.upsert(collection_name="rag_docs_ar", points=ar_points)
 
 # ================================
 # 🔹 DOCUMENT LOADING FUNCTION

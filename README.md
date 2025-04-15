@@ -16,47 +16,6 @@ Powered by **Azure AI Containers**, it ensures **high-performance retrieval, acc
 **On-Premise Ready**: Designed for **full offline deployment**, making it ideal for **customers needing secure, cloud-independent AI solutions**.  
 
 ---
-
-## 🔹 How Azure AI Containers Can Enhance your Offline RAG System
-Azure AI Containers enable advanced AI capabilities while keeping the system **fully offline and on-premise-ready**. These services improve **document processing, query understanding, and response generation**, making the system **more accurate, secure, and scalable**.
-
-| **Category**                          | **Azure AI Service**                                  | **Enhancement** |
-|--------------------------------------|-----------------------------------------------------|----------------|
-| **📄 Improving Document Processing & Indexing** | **Azure AI Vision - Read** | Extracts text from **scanned documents & images**, making PDFs and handwritten content searchable. |
-|                                      | **Azure Document Intelligence** | Processes **structured documents** (e.g., invoices, contracts) before indexing, improving retrieval in legal and enterprise use cases. |
-| **🔎 Enhancing Query Understanding & Retrieval** | **Azure AI Language** | Detects **query language** to route requests correctly. |
-|                                      | **Conversational Language Understanding (CLU)** | Classifies **query intent** (e.g., search vs. summarization) for smarter responses. |
-| **🤖 Enhancing AI-Generated Responses** | **Azure AI Sentiment Analysis** | Adjusts AI response **tone** (formal/casual) based on sentiment detection. |
-|                                      | **Azure AI Text Translation** | Enables **cross-language retrieval** (e.g., Arabic query → English documents). |
-|                                      | **Neural Text-to-Speech (TTS)** | Converts **AI responses into speech**, enabling chatbot and voice assistant integrations. |
-| **🛡️ Ensuring Content Safety & Compliance** | **Azure AI Content Safety** | Scans **both text and images** for **violence, hate speech, self-harm, and explicit content**, ensuring AI-generated responses and retrieved documents comply with safety standards. |
-
-🔹 **These integrations ensure the RAG system remains fully functional in offline environments while benefiting from enterprise-grade AI.**  
-
-📌 **Learn More**: [Azure AI Containers](https://learn.microsoft.com/en-us/azure/ai-services/cognitive-services-container-support)  
-📌 **Azure AI Content Safety**: [Content Safety Containers (Preview)](https://learn.microsoft.com/en-us/azure/ai-services/content-safety/how-to/containers/container-overview)  
-
----
-
-## ✅ Enhanced User Flow with Azure AI Containers
-
-| **Step** | **Tool Used** | **Description** |
-|----------|-------------|----------------|
-| **1. User enters or speaks a query** | Streamlit UI + **Azure AI Speech (Offline Container)** | Users can either type or speak their query. |
-| **2. Spellcheck query** | **Bergamot (Local Spellchecker)** | Fixes typos before processing the query. |
-| **3. Detect query language** | **Azure AI Language (Offline Container)** | Determines whether the query is in Arabic or English. |
-| **4. Translate query (if needed)** | **Azure Translator (Optional)** | Converts non-Arabic/English queries into a supported language. |
-| **5. Generate query embedding** | **Ollama (`bge-m3` for English & Arabic)** | Converts the query into a numerical vector representation. |
-| **6. Retrieve relevant documents** | **Qdrant (Vector DB) + BM25 Hybrid Retrieval** | Performs a **hybrid search**: vector similarity search (embeddings) + keyword-based retrieval (BM25). |
-| **7. Rank retrieved documents** | **BM25 (Rank-BM25) + `bge-m3` Reranking** | Ranks results based on **keyword relevance and vector similarity**. |
-| **8. Extract named entities (Optional)** | **Azure AI NER (Offline Container)** | Identifies **key entities** in the query to improve retrieval precision. |
-| **9. Apply OCR for document parsing** | **Azure Document Intelligence (Offline Container)** | Extracts text from **scanned PDFs, images, or structured documents** to improve knowledge base ingestion. |
-| **10. Summarize long documents (Optional)** | **Azure Text Summarization (Offline Container)** | Summarizes **retrieved long documents** before passing them to the LLM. |
-| **11. Generate an AI response** | **Ollama (`Qwen2.5` for English & `Gemma2B` for Arabic)** | Uses an **LLM** to generate an **answer using the top-ranked documents as context**. |
-| **12. Apply content safety filters** | **Azure AI Content Safety (Offline Container)** | Ensures the **AI-generated response follows safety guidelines**, filtering out harmful or inappropriate content. |
-| **13. Display response** | **Streamlit UI** | Shows **retrieved documents, scores, and the final AI response**. |
-
----
 ## 🛠️ **Setup & Installation**  
 
 ### **1️⃣ Preinstalled Requirements**
@@ -154,33 +113,58 @@ curl -X DELETE "http://localhost:6333/collections/rag_docs_en"
 curl -X DELETE "http://localhost:6333/collections/rag_docs_ar"
 ```
 
-## ** Testing the System 
-
-```
-PYTHONPATH=$(pwd) pytest tests/test_indexer.py # Test Indexing & Qdrant Setup
-
-PYTHONPATH=$(pwd) pytest tests/test_retriever.py # Test Document Retrieval & Search
-
-PYTHONPATH=$(pwd) pytest tests/test_ai_responses.py # Test AI Response Generation 
-
-PYTHONPATH=$(pwd) python tests/test_retriever_queries.py # Output: Retrieved documents, Detected query language & Relevance scores
-
-PYTHONPATH=$(pwd) python tests/test_ai_responses.py # Test AI Response with Context. This will test if the AI correctly generates responses based on retrieved documents.
-```
-
-
 ### **8️⃣ Start the Streamlit UI**
 ```bash
 streamlit run src/app.py
 ```
-
-
 
 ### **9️⃣ Test Queries**
 Open your browser at `http://localhost:8501` and enter any query.  
 Examples:  
 - **English:** `"What is artificial intelligence?"`  
 - **Arabic:** `"ما هو الذكاء الاصطناعي؟"`
+
+
+---
+
+## 🔹 How Azure AI Containers Can Enhance your Offline RAG System
+Azure AI Containers enable advanced AI capabilities while keeping the system **fully offline and on-premise-ready**. These services improve **document processing, query understanding, and response generation**, making the system **more accurate, secure, and scalable**.
+
+| **Category**                          | **Azure AI Service**                                  | **Enhancement** |
+|--------------------------------------|-----------------------------------------------------|----------------|
+| **📄 Improving Document Processing & Indexing** | **Azure AI Vision - Read** | Extracts text from **scanned documents & images**, making PDFs and handwritten content searchable. |
+|                                      | **Azure Document Intelligence** | Processes **structured documents** (e.g., invoices, contracts) before indexing, improving retrieval in legal and enterprise use cases. |
+| **🔎 Enhancing Query Understanding & Retrieval** | **Azure AI Language** | Detects **query language** to route requests correctly. |
+|                                      | **Conversational Language Understanding (CLU)** | Classifies **query intent** (e.g., search vs. summarization) for smarter responses. |
+| **🤖 Enhancing AI-Generated Responses** | **Azure AI Sentiment Analysis** | Adjusts AI response **tone** (formal/casual) based on sentiment detection. |
+|                                      | **Azure AI Text Translation** | Enables **cross-language retrieval** (e.g., Arabic query → English documents). |
+|                                      | **Neural Text-to-Speech (TTS)** | Converts **AI responses into speech**, enabling chatbot and voice assistant integrations. |
+| **🛡️ Ensuring Content Safety & Compliance** | **Azure AI Content Safety** | Scans **both text and images** for **violence, hate speech, self-harm, and explicit content**, ensuring AI-generated responses and retrieved documents comply with safety standards. |
+
+🔹 **These integrations ensure the RAG system remains fully functional in offline environments while benefiting from enterprise-grade AI.**  
+
+📌 **Learn More**: [Azure AI Containers](https://learn.microsoft.com/en-us/azure/ai-services/cognitive-services-container-support)  
+📌 **Azure AI Content Safety**: [Content Safety Containers (Preview)](https://learn.microsoft.com/en-us/azure/ai-services/content-safety/how-to/containers/container-overview)  
+
+---
+
+## ✅ Enhanced User Flow with Azure AI Containers
+
+| **Step** | **Tool Used** | **Description** |
+|----------|-------------|----------------|
+| **1. User enters or speaks a query** | Streamlit UI + **Azure AI Speech (Offline Container)** | Users can either type or speak their query. |
+| **2. Spellcheck query** | **Bergamot (Local Spellchecker)** | Fixes typos before processing the query. |
+| **3. Detect query language** | **Azure AI Language (Offline Container)** | Determines whether the query is in Arabic or English. |
+| **4. Translate query (if needed)** | **Azure Translator (Optional)** | Converts non-Arabic/English queries into a supported language. |
+| **5. Generate query embedding** | **Ollama (`bge-m3` for English & Arabic)** | Converts the query into a numerical vector representation. |
+| **6. Retrieve relevant documents** | **Qdrant (Vector DB) + BM25 Hybrid Retrieval** | Performs a **hybrid search**: vector similarity search (embeddings) + keyword-based retrieval (BM25). |
+| **7. Rank retrieved documents** | **BM25 (Rank-BM25) + `bge-m3` Reranking** | Ranks results based on **keyword relevance and vector similarity**. |
+| **8. Extract named entities (Optional)** | **Azure AI NER (Offline Container)** | Identifies **key entities** in the query to improve retrieval precision. |
+| **9. Apply OCR for document parsing** | **Azure Document Intelligence (Offline Container)** | Extracts text from **scanned PDFs, images, or structured documents** to improve knowledge base ingestion. |
+| **10. Summarize long documents (Optional)** | **Azure Text Summarization (Offline Container)** | Summarizes **retrieved long documents** before passing them to the LLM. |
+| **11. Generate an AI response** | **Ollama (`Qwen2.5` for English & `Gemma2B` for Arabic)** | Uses an **LLM** to generate an **answer using the top-ranked documents as context**. |
+| **12. Apply content safety filters** | **Azure AI Content Safety (Offline Container)** | Ensures the **AI-generated response follows safety guidelines**, filtering out harmful or inappropriate content. |
+| **13. Display response** | **Streamlit UI** | Shows **retrieved documents, scores, and the final AI response**. |
 
 ---
 ## 📌 **Addressing Arabic Language Challenges**

@@ -51,7 +51,7 @@ def create_collection_if_not_exists(client: QdrantClient, collection_name: str, 
     if not client.collection_exists(collection_name):
         client.create_collection(
             collection_name=collection_name,
-            vectors_config=VectorParams(size=vector_size, distance="cosine")
+            vectors_config=VectorParams(size=vector_size, distance="Cosine")
         )
         print(f"Created new collection '{collection_name}'")
 
@@ -123,6 +123,38 @@ def generate_embedding(text: str, language: str) -> List[float]:
 # 🔹 DOCUMENT PROCESSING FUNCTION
 # ================================
 
+def extract_entities(text: str, language: str = "en") -> List[Dict[str, str]]:
+    """Extract named entities from text using Azure Language Service."""
+    try:
+        base_endpoint = AZURE_LANGUAGE_ENDPOINT.rstrip('/')
+        endpoint = f"{base_endpoint}/text/analytics/v3.1/entities/recognition/general"
+        
+        headers = {
+            "Ocp-Apim-Subscription-Key": AZURE_LANGUAGE_KEY,
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "documents": [{
+                "id": "1",
+                "text": text,
+                "language": "ar" if language == "arabic" else "en"
+            }]
+        }
+
+        response = requests.post(endpoint, headers=headers, json=payload)
+        response.raise_for_status()
+        
+        result = response.json()
+        if "documents" in result and result["documents"]:
+            return [{"text": entity["text"], "category": entity["category"]} 
+                   for entity in result["documents"][0]["entities"]]
+            
+    except Exception as e:
+        print(f"Error extracting entities: {e}")
+    
+    return []
+
 def process_document(text: str, filename: str = None) -> List[Dict[str, Any]]:
     """Process a document and prepare it for indexing."""
     # Split text into chunks
@@ -133,13 +165,25 @@ def process_document(text: str, filename: str = None) -> List[Dict[str, Any]]:
         # Detect language for each chunk
         language = detect_language(chunk)
         
+        # Extract entities from the chunk
+        entities = extract_entities(chunk, language)
+        
+        # Group entities by category
+        entities_by_category = {}
+        for entity in entities:
+            category = entity["category"]
+            if category not in entities_by_category:
+                entities_by_category[category] = []
+            entities_by_category[category].append(entity["text"])
+        
         processed_chunks.append({
             "text": chunk,
             "metadata": {
                 "chunk_id": i,
                 "total_chunks": len(chunks),
                 "source": filename or "unknown",
-                "language": language
+                "language": language,
+                "entities": entities_by_category  # Store categorized entities
             }
         })
     

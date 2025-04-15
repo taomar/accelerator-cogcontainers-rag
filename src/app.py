@@ -19,7 +19,7 @@ st.set_page_config(
 
 # 🌍 Header
 st.markdown("<h1 style='text-align: center;'>🔍 Edge RAG Search</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center;'>Powered by Azure AI Containers to run this RAG system offline or on premise and enhance accuracy, retrieval, and insights.</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center;'>Powered by Azure AI Services to enhance accuracy, retrieval, and insights.</p>", unsafe_allow_html=True)
 
 # Initialize session state
 if 'documents_indexed' not in st.session_state:
@@ -27,48 +27,66 @@ if 'documents_indexed' not in st.session_state:
 if 'last_query' not in st.session_state:
     st.session_state.last_query = None
 
-# Custom CSS for better UI
-st.markdown("""
-<style>
-    .stButton>button {
-        width: 100%;
-        margin: 5px 0;
-    }
-    .stTextInput>div>div>input {
-        font-size: 16px;
-    }
-    .stMarkdown {
-        margin-bottom: 1rem;
-    }
-    .info-box {
-        background-color: #f0f2f6;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin: 1rem 0;
-    }
-    /* Hide the map container and duplicate title */
-    .element-container:has(iframe),
-    .element-container:has(> div > .stMarkdown:first-child h1) {
-        display: none !important;
-    }
-    /* Remove extra padding */
-    .block-container {
-        padding-top: 2rem;
-    }
-    /* Adjust title spacing */
-    h1 {
-        margin-bottom: 1rem !important;
-    }
-    /* Hide the map container */
-    [data-testid="stDecoration"] {
-        display: none;
-    }
-</style>
-""", unsafe_allow_html=True)
-
 # Sidebar
 with st.sidebar:
     st.title("📄 Document Management")
+    
+    # Tech Stack Information
+    st.markdown("### 🛠️ Tech Stack")
+    
+    # Vector Database
+    st.markdown("#### 🔍 Vector Database")
+    st.markdown("""
+    - **Qdrant**: High-performance vector similarity search
+    - **Features**:
+        - Hybrid search (vector + keyword)
+        - Multi-language support
+        - Real-time indexing
+    """)
+    
+    # Embeddings
+    st.markdown("#### 🧠 Embeddings")
+    st.markdown("""
+    - **bge-m3**: State-of-the-art embedding model
+    - **Capabilities**:
+        - 1024-dimensional vectors
+        - Optimized for retrieval
+        - Cross-lingual support
+    """)
+    
+    # LLM
+    st.markdown("#### 🤖 Language Models")
+    st.markdown("""
+    - **Ollama**:
+        - English: gemma3:1b
+        - Arabic: phi4-mini:3.8b
+    - **Features**:
+        - Context-aware responses
+        - Multi-turn conversations
+        - Language-specific optimizations
+    """)
+    
+    # Azure AI Services
+    st.markdown("#### ⚡ Azure AI Services")
+    st.markdown("""
+    - **Language Service**:
+        - Language detection
+        - Named Entity Recognition (NER)
+        - High accuracy (>99% confidence)
+    """)
+    
+    # Language Support
+    st.markdown("### 🌍 Language Support")
+    st.markdown("""
+    - **English** 🇬🇧
+        - Full semantic search
+        - Entity recognition
+        - Context-aware responses
+    - **Arabic** 🇸🇦
+        - Native language support
+        - Arabic-specific embeddings
+        - Cultural context awareness
+    """)
     
     # Document Upload Section
     st.subheader("Upload Documents")
@@ -98,7 +116,7 @@ with st.sidebar:
                 st.error(f"❌ Error indexing document: {str(e)}")
 
     # Load Documents Button
-    if st.button("📂 Load Sample Documents", help="Load pre-indexed sample documents about AI in healthcare"):
+    if st.button("📂 Load Sample Documents", help="Load pre-indexed sample documents"):
         with st.spinner("Loading documents..."):
             try:
                 load_documents()
@@ -107,29 +125,12 @@ with st.sidebar:
             except Exception as e:
                 st.error(f"❌ Error loading documents: {str(e)}")
 
-    # Models Information
-    st.title("🤖 System Information")
-    st.markdown("""
-    ### Models
-    - **Embedding**: `bge-m3` (English & Arabic)
-    - **Response Generation**: 
-        - English: `gemma3:1b`
-        - Arabic: `phi4-mini:3.8b`
-    - **Database**: Qdrant + BM25
-
-    ### Azure AI Services
-    - **Language Detection**: Azure Language Service
-    - **Named Entity Recognition**: Azure NER Service
-    - **Content Safety**: Azure Content Safety
-    - **Document Intelligence**: Azure Document Intelligence
-    """)
-
 # Main Content
 
 # Search Input
 query = st.text_input(
-    "Ask a question about AI:",
-    placeholder="e.g., What are the benefits of AI in healthcare?",
+    "Ask a question:",
+    placeholder="e.g., What did Microsoft and OpenAI announce?",
     key="search_input"
 )
 
@@ -154,8 +155,17 @@ if st.button("🔍 Search", use_container_width=True):
                     with st.spinner("Generating response..."):
                         response = generate_response(query, results)
                         st.subheader("🤖 AI Response")
-                        st.write(response)
-                    
+                        
+                        # Add RTL support for Arabic responses
+                        if language == "arabic":
+                            st.markdown(f"""
+                            <div dir="rtl" style="text-align: right; font-family: 'Arial', sans-serif; line-height: 1.8;">
+                                {response}
+                            </div>
+                            """, unsafe_allow_html=True)
+                        else:
+                            st.write(response)
+                        
                     # Display sources below the response
                     st.subheader("📚 Sources")
                     for i, doc in enumerate(results, 1):
@@ -163,11 +173,32 @@ if st.button("🔍 Search", use_container_width=True):
                         lang_emoji = "🇬🇧" if doc.get('language') == "english" else "🇸🇦"
                         lang_display = doc.get('language', 'unknown').capitalize()
                         
+                        # Add RTL support for Arabic source content
                         with st.expander(f"Source {i} (Relevance: {doc['score']:.2f})"):
                             st.write(f"**Document:** {source_name}")
                             st.write(f"**Language:** {lang_emoji} {lang_display}")
                             st.write("**Relevant Content:**")
-                            st.markdown(f"```\n{doc.get('text', 'No content available')}\n```")
+                            
+                            if doc.get('language') == "arabic":
+                                st.markdown(f"""
+                                <div dir="rtl" style="text-align: right; font-family: 'Arial', sans-serif; line-height: 1.8;">
+                                    {doc.get('text', 'No content available')}
+                                </div>
+                                """, unsafe_allow_html=True)
+                            else:
+                                st.markdown(f"```\n{doc.get('text', 'No content available')}\n```")
+                                
+                            if 'entities' in doc['matched_entities']:
+                                st.write("**Named Entities:**")
+                                for category, entities in doc['matched_entities'].items():
+                                    if doc.get('language') == "arabic":
+                                        st.markdown(f"""
+                                        <div dir="rtl" style="text-align: right;">
+                                            - {category}: {', '.join(entities)}
+                                        </div>
+                                        """, unsafe_allow_html=True)
+                                    else:
+                                        st.write(f"- {category}: {', '.join(entities)}")
                 else:
                     st.warning("No relevant documents found. Try rephrasing your question or loading more documents.")
             except Exception as e:
@@ -175,16 +206,19 @@ if st.button("🔍 Search", use_container_width=True):
     else:
         st.warning("Please enter a question to search.")
 
-# Example Prompts
-st.subheader("💡 Example Questions")
-col1, col2 = st.columns(2)
+# Example Prompts Section at the bottom
+st.markdown("---")
+st.markdown("### 📝 Example Prompts for Testing")
+st.code("""
+# English Prompts:
+What did Microsoft and OpenAI announce recently?
+Tell me about AI developments in Seattle
+What is Jeff Bezos's role in AI innovation?
+Compare AI initiatives of different tech companies
 
-with col1:
-    st.markdown("**English:**")
-    st.markdown("- What are the key benefits of AI in healthcare?")
-    st.markdown("- How does AI improve disease diagnostics?")
-
-with col2:
-    st.markdown("**Arabic:**")
-    st.markdown("- ما هي فوائد الذكاء الاصطناعي في الرعاية الصحية؟")
-    st.markdown("- كيف يساعد الذكاء الاصطناعي في تشخيص الأمراض؟")
+# Arabic Prompts:
+ما هي مشاريع الذكاء الاصطناعي في دبي؟
+ماذا أعلنت شركة مايكروسوفت في المنطقة العربية؟
+ما هي خطط جيف بيزوس في أبوظبي؟
+كيف تساهم الشركات التقنية في تطوير الذكاء الاصطناعي في السعودية؟
+""", language="markdown")

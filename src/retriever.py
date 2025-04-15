@@ -9,6 +9,7 @@ from qdrant_client import QdrantClient
 from rank_bm25 import BM25Okapi
 from nltk.tokenize import word_tokenize
 from dotenv import load_dotenv
+from typing import List, Dict, Any
 
 # Load environment variables from .env file
 load_dotenv()
@@ -110,78 +111,132 @@ def tokenize_text(text, language):
     return [word.lower() for word in word_tokenize(text) if word not in string.punctuation]
 
 # -----------------------------------------------
+# 🔹 Function: Extract Entities
+# -----------------------------------------------
+
+def extract_entities(text: str, language: str = "en") -> List[Dict[str, str]]:
+    """Extract named entities from text using Azure Language Service."""
+    try:
+        base_endpoint = AZURE_LANGUAGE_ENDPOINT.rstrip('/')
+        endpoint = f"{base_endpoint}/text/analytics/v3.1/entities/recognition/general"
+        
+        headers = {
+            "Ocp-Apim-Subscription-Key": AZURE_LANGUAGE_KEY,
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "documents": [{
+                "id": "1",
+                "text": text,
+                "language": "ar" if language == "arabic" else "en"
+            }]
+        }
+
+        response = requests.post(endpoint, headers=headers, json=payload)
+        response.raise_for_status()
+        
+        result = response.json()
+        if "documents" in result and result["documents"]:
+            return [{"text": entity["text"], "category": entity["category"]} 
+                   for entity in result["documents"][0]["entities"]]
+            
+    except Exception as e:
+        print(f"Error extracting entities: {e}")
+    
+    return []
+
+# -----------------------------------------------
+# 🔹 Function: Calculate Entity Score
+# -----------------------------------------------
+
+def calculate_entity_score(query_entities: List[Dict[str, str]], doc_entities: Dict[str, List[str]]) -> float:
+    """Calculate similarity score based on matching entities."""
+    if not query_entities or not doc_entities:
+        return 0.0
+    
+    score = 0.0
+    for query_entity in query_entities:
+        query_text = query_entity["text"].lower()
+        query_category = query_entity["category"]
+        
+        # Check if the entity exists in the same category
+        if query_category in doc_entities:
+            doc_entities_in_category = [e.lower() for e in doc_entities[query_category]]
+            if query_text in doc_entities_in_category:
+                score += 1.0  # Direct match in same category
+            else:
+                # Check for partial matches
+                for doc_entity in doc_entities_in_category:
+                    if query_text in doc_entity or doc_entity in query_text:
+                        score += 0.5  # Partial match
+    
+    return score / len(query_entities)  # Normalize score
+
+# -----------------------------------------------
 # 🔹 Function: Search Documents with Hybrid Retrieval
 # -----------------------------------------------
 
-def search_documents(query, language):
+def search_documents(query: str, language: str) -> List[Dict[str, Any]]:
     """
-    Retrieves documents using hybrid search (Vector Similarity + BM25).
-    - **Vector Search**: Finds documents with semantic similarity.
-    - **BM25 Ranking**: Boosts based on exact keyword matches.
+    Enhanced search using both vector similarity and entity matching.
     """
+    # Extract entities from the query
+    query_entities = extract_entities(query, language)
+    print(f"\n🔍 Query Entities: {[f'{e['text']} ({e['category']})' for e in query_entities]}")
+    
+    # Generate query vector
     query_vector = generate_embedding(query, language)
     collection_name = "rag_docs_ar" if language == "arabic" else "rag_docs_en"
 
     if not client.collection_exists(collection_name):
-        print(f"🚨 Collection '{collection_name}' not found in Qdrant. Skipping retrieval.")
+        print(f"Collection '{collection_name}' not found")
         return []
 
-    print(f"🔎 Searching for query: {query} in collection: {collection_name}")
-
-    retrieved_docs = []  # ✅ Initialize the list
-    seen_texts = set()
-
     try:
+        # Get initial results using vector search
         vector_results = client.search(
             collection_name=collection_name,
             query_vector=query_vector,
-            limit=20,  # Retrieve more docs to improve ranking
+            limit=20,  # Get more results initially for re-ranking
             with_payload=True,
-            with_vectors=True
+            score_threshold=0.0
         )
 
-        # ✅ Populate retrieved_docs properly
+        # Process and re-rank results
+        enhanced_results = []
         for hit in vector_results:
             doc_text = hit.payload.get("text", "")
-            if doc_text not in seen_texts:
-                retrieved_docs.append({
-                    "text": doc_text,
-                    "score": hit.score,
-                    "source": hit.payload.get("metadata", {}).get("source", "Unknown"),
-                    "chunk_id": hit.payload.get("metadata", {}).get("chunk_id", 0),
-                    "total_chunks": hit.payload.get("metadata", {}).get("total_chunks", 1),
-                    "language": hit.payload.get("metadata", {}).get("language", language),
-                    "key_phrases": hit.payload.get("metadata", {}).get("key_phrases", [])
-                })
-                seen_texts.add(doc_text)
+            doc_metadata = hit.payload.get("metadata", {})
+            doc_entities = doc_metadata.get("entities", {})
+            
+            # Calculate entity matching score
+            entity_score = calculate_entity_score(query_entities, doc_entities)
+            
+            # Combine vector similarity with entity score
+            combined_score = (hit.score + entity_score) / 2 if entity_score > 0 else hit.score
+            
+            enhanced_results.append({
+                "text": doc_text,
+                "score": combined_score,
+                "vector_score": hit.score,
+                "entity_score": entity_score,
+                "source": doc_metadata.get("source", "Unknown"),
+                "chunk_id": doc_metadata.get("chunk_id", 0),
+                "total_chunks": doc_metadata.get("total_chunks", 1),
+                "language": doc_metadata.get("language", language),
+                "matched_entities": doc_entities
+            })
 
-        print(f"🔹 Retrieved {len(retrieved_docs)} unique documents")
+        # Sort by combined score
+        enhanced_results.sort(key=lambda x: x["score"], reverse=True)
+        
+        # Return top 10 results
+        return enhanced_results[:10]
 
     except Exception as e:
-        print(f"⚠️ Vector search error: {e}")
-        return []  # ✅ Return an empty list if retrieval fails
-
-    # ✅ Apply BM25 Re-Ranking
-    if retrieved_docs:
-        try:
-            corpus = [doc["text"] for doc in retrieved_docs]
-            tokenized_corpus = [tokenize_text(doc, language) for doc in corpus]
-            bm25 = BM25Okapi(tokenized_corpus)
-
-            query_tokens = tokenize_text(query, language)
-            bm25_scores = bm25.get_scores(query_tokens)
-
-            for idx, doc in enumerate(retrieved_docs):
-                doc["bm25_score"] = bm25_scores[idx]
-
-            # ✅ Boost BM25 for Arabic queries
-            weight_vector = 0.5 if language == "english" else 1.2  
-            retrieved_docs = sorted(retrieved_docs, key=lambda x: (x["bm25_score"] * weight_vector) + x["score"], reverse=True)
-
-        except Exception as e:
-            print(f"⚠️ BM25 search error: {e}")
-
-    return retrieved_docs  # ✅ Return the list safely
+        print(f"Search error: {e}")
+        return []
 
 # -----------------------------------------------
 # 🔹 Function: Clean AI Response & Apply Arabic Formatting
@@ -215,18 +270,22 @@ def generate_response(query, max_length=512, temperature=0.9, top_k=40, repetiti
     """Generates a response using the appropriate LLM model based on detected language."""
     
     language = detect_language(query)
-    model_name = "phi4-mini:3.8b" if language == "arabic" else "gemma3:1b"
+    model_name = "gemma3:1b" if language == "arabic" else "phi4-mini:3.8b"
 
     if language == "arabic":
         prompt = f"""
-        جاوب على السؤال التالي باللغة العربية فقط:
-
-        **السؤال:** {query}
-
-        **الإجابة يجب أن تكون:**
-        ◼ منظمة ومفصلة
-        ◼ بدون تكرار غير ضروري
-        ◼ لا تتوقف في منتصف الجملة، تأكد من إنهاء الفكرة بالكامل
+        أنت مساعد ذكي متخصص باللغة العربية. يجب أن تجيب باللغة العربية الفصحى فقط.
+        لا تستخدم أي كلمات إنجليزية أو رموز غير عربية.
+        
+        السؤال: {query}
+        
+        قواعد الإجابة:
+        ١. استخدم اللغة العربية الفصحى فقط
+        ٢. تجنب أي كلمات أجنبية أو رموز غير عربية
+        ٣. استخدم المصطلحات العربية المعتمدة (مثل: الذكاء الاصطناعي بدلاً من AI)
+        ٤. نظم الإجابة بشكل واضح ومرتب
+        ٥. اكتب إجابة كاملة ومفصلة
+        ٦. استخدم الأرقام العربية (١، ٢، ٣) بدلاً من الأرقام الإنجليزية
         """
     else:
         prompt = f"Answer the following question in clear, well-structured English:\n\n{query}"
@@ -234,7 +293,15 @@ def generate_response(query, max_length=512, temperature=0.9, top_k=40, repetiti
     response = ollama.chat(
         model=model_name,
         messages=[{"role": "user", "content": prompt}],
-        options={"temperature": temperature, "top_k": top_k, "max_length": max_length, "repetition_penalty": repetition_penalty}
+        options={
+            "temperature": temperature,
+            "top_k": top_k,
+            "max_length": max_length,
+            "repetition_penalty": repetition_penalty,
+            "stop": ["</s>", "user:", "assistant:"]  # Prevent model from continuing conversation
+        }
     )
 
-    return response["message"]["content"]
+    # Clean and format the response
+    response_text = response["message"]["content"]
+    return clean_ai_response(response_text, language)

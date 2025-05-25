@@ -23,8 +23,13 @@ Ensure you have the following installed before proceeding:
 - **Python 3.9+** → [Download Here](https://www.python.org/downloads/)
 - **Docker** → [Download Here](https://www.docker.com/get-started/)
 - **Ollama** → [Install Guide](https://ollama.com)
-- **Azure Document Intelligence Connected/Disconnected Containers (you can use connected containers as well as disconnected following same, Disconnected containers needs prereservation)** → [Disconnected Containers](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/containers/disconnected?view=doc-intel-4.0.0#document-intelligence-container-models-and-configuration)
+- **Azure Document Intelligence (get a key first) Connected/Disconnected Containers (you can use connected containers as well as disconnected following same, Disconnected containers needs reservation)** → [Disconnected Containers](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/containers/disconnected?view=doc-intel-4.0.0#document-intelligence-container-models-and-configuration)
+- **Azure Language AI (get a key first) Connected/Disconnected Containers (you can use connected containers as well as disconnected following same, Disconnected containers needs reservation)** →[Azure Language Detection - Container Guide]( https://learn.microsoft.com/en-us/azure/ai-services/language-service/concepts/configure-containers)
 
+
+# 🧠 Edge-RAG: On-Premises RAG with Azure AI + Ollama + Qdrant
+
+This project implements a full-stack Retrieval-Augmented Generation (RAG) system that runs on-premises using **Azure AI Containers**, **Ollama**, and **Qdrant**. It supports both **English** and **Arabic** document ingestion and query responses via a **Streamlit UI**.
 
 ### **1️⃣ Clone the Repository**
 ```bash
@@ -32,26 +37,67 @@ git clone https://github.com/hamzaelgh/edge-rag.git
 cd edge-rag
 ```
 
-### **2️⃣ Set Up Python Virtual Environment**
+### **2️⃣ Create a `.env` File**
+Create a `.env` file in the root directory with the following content:
+
+<details>
+<summary>Click to expand</summary>
+
+```env
+# Azure AI Language Disconnected Container
+AZURE_LANGUAGE_ENDPOINT=https://edge-rag-lang.cognitiveservices.azure.com/
+AZURE_LANGUAGE_KEY=EjMcDW7R4nr2c4zkUOKhXD7N6anIleWJpTcUL53zUei0Uyk9xOMJJQQJ99BCACYeBjFXJ3w3AAAaACOGCBOB
+
+# Azure Document Intelligence Disconnected Container
+AZURE_DOC_INTEL_ENDPOINT=https://edge-rag-docintel.cognitiveservices.azure.com/
+AZURE_DOC_INTEL_KEY=3A0FxGckRdsnZ97854vq4bYAD4bjgPnRZFZv0FTjiclef1rqtebMJQQJ99BDACYeBjFXJ3w3AAALACOGQEO9
+
+# Qdrant Configuration
+QDRANT_HOST=localhost
+QDRANT_PORT=6333
+QDRANT_URL=http://localhost:6333
+COLLECTION_NAME=documents
+
+# Processing Configuration
+EMBEDDING_SIZE=1024
+CHUNK_SIZE=200
+CHUNK_OVERLAP=50
+BATCH_SIZE=100
+MAX_RETRIES=3
+RETRY_DELAY=1
+
+# Model Configuration
+EMBEDDING_MODEL=bge-m3
+CACHE_EMBEDDINGS=true
+CACHE_SIZE=10000
+
+# Performance Configuration
+MAX_WORKERS=4
+EMBEDDING_TIMEOUT=30
+```
+
+</details>
+
+### **3️⃣ Set Up Python Virtual Environment**
 ```bash
 python3 -m venv venv
 source venv/bin/activate  # macOS/Linux
-venv\Scripts\activate   # Windows
+venv\Scripts\activate     # Windows
 ```
 
-### **3️⃣ Install Dependencies**
+### **4️⃣ Install Dependencies**
 ```bash
 pip install -r requirements.txt
 source .env 
 ```
 
-### **4️⃣ Start Qdrant (Vector Database)**
+### **5️⃣ Start Qdrant (Vector Database)**
 Make sure **Docker** is installed, then run:
 ```bash
 docker run -p 6333:6333 -p 6334:6334 qdrant/qdrant
 ```
 
-### **5️⃣ Install & Run Ollama**
+### **6️⃣ Install & Run Ollama**
 Follow Ollama installation from [Ollama's official website](https://ollama.com). Then, pull the required models:
 ```bash
 ollama serve 
@@ -61,8 +107,10 @@ ollama pull bge-m3
 ollama pull jaluma/arabert-all-nli-triplet-matryoshka:latest 
 ```
 
-### **6️⃣ Run Azure AI Containers**
+### **7️⃣ Run Azure AI Containers**
+
 #### **Language Detection**
+Run container:
 ```bash
 docker run --rm -it --platform linux/amd64 -p 5000:5000 --memory 6g --cpus 2 \
   mcr.microsoft.com/azure-cognitive-services/textanalytics/language \
@@ -71,7 +119,8 @@ docker run --rm -it --platform linux/amd64 -p 5000:5000 --memory 6g --cpus 2 \
   ApiKey="$AZURE_LANGUAGE_API_KEY"
 ```
 
-```
+Test API:
+```bash
 curl -X POST "http://localhost:5000/text/analytics/v3.1/languages" \
      -H "Content-Type: application/json" \
      -d '{
@@ -82,49 +131,53 @@ curl -X POST "http://localhost:5000/text/analytics/v3.1/languages" \
         }'
 ```
 
-#### **Named Eneity Recognition**
+📘 [Azure Language Detection Container Guide](https://learn.microsoft.com/en-us/azure/ai-services/language-service/language-detection/how-to/use-containers)
+
+#### **Named Entity Recognition**
 ```bash 
 docker run --rm -it -p 5000:5000 --memory 8g --cpus 1 \
 mcr.microsoft.com/azure-cognitive-services/textanalytics/ner:latest \
 Eula=accept \
-Billing={AZURE_LANGUAGE_BILLING_URL} \
-ApiKey={AZURE_LANGUAGE_KEY}
-
-
+Billing=${AZURE_LANGUAGE_BILLING_URL} \
+ApiKey=${AZURE_LANGUAGE_KEY}
 ```
 
 ```bash 
-curl -X POST "http://localhost:5000/text/analytics/v3.1/entities/recognition/general" -H "Content-Type: application/json" -H "Ocp-Apim-Subscription-Key: ${AZURE_LANGUAGE_KEY}" -d '{"documents":[{"id":"1","text":"Microsoft was founded by Bill Gates and Paul Allen in 1975. The company is headquartered in Redmond, Washington."}]}'
+curl -X POST "http://localhost:5000/text/analytics/v3.1/entities/recognition/general" \
+     -H "Content-Type: application/json" \
+     -H "Ocp-Apim-Subscription-Key: ${AZURE_LANGUAGE_KEY}" \
+     -d '{"documents":[{"id":"1","text":"Microsoft was founded by Bill Gates and Paul Allen in 1975. The company is headquartered in Redmond, Washington."}]}'
 ```
 
-
-### **7️⃣ Prepare & Index Documents**
+### **8️⃣ Prepare & Index Documents**
 Store your dataset inside the `data/` folder, then run:
 ```bash
 python src/indexer.py
 ```
 
-Verify if the Qdrant Collections Exist
-```
+Check Qdrant Collections:
+```bash
 curl -X GET "http://localhost:6333/collections"
 ```
 
-Clean Qdrant Collections if needed. 
-```
+Clean Qdrant if needed:
+```bash
 curl -X DELETE "http://localhost:6333/collections/rag_docs_en"
 curl -X DELETE "http://localhost:6333/collections/rag_docs_ar"
 ```
 
-### **8️⃣ Start the Streamlit UI**
+### **9️⃣ Start the Streamlit UI**
 ```bash
 streamlit run src/app.py
 ```
 
-### **9️⃣ Test Queries**
-Open your browser at `http://localhost:8501` and enter any query.  
-Examples:  
+### **🔟 Test Queries**
+Open your browser at: [http://localhost:8501](http://localhost:8501)
+
+Example Queries:
 - **English:** `"What is artificial intelligence?"`  
 - **Arabic:** `"ما هو الذكاء الاصطناعي؟"`
+
 
 
 ---

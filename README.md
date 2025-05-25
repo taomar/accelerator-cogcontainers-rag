@@ -80,7 +80,7 @@ curl -X POST "http://localhost:5000/text/analytics/v3.1/languages" \
         }'
 ```
 
-#### **NER**
+#### **Named Eneity Recognition**
 ```bash 
 docker run --rm -it -p 5000:5000 --memory 8g --cpus 1 \
 mcr.microsoft.com/azure-cognitive-services/textanalytics/ner:latest \

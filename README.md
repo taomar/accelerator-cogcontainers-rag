@@ -1,7 +1,7 @@
-# 🧠 AI-Powered RAG System 🔍  
+# On Premises RAG solution, Powered by Azure Cognitive Services 🔍  
 **Deployable Offline | On-Premise | Any Cloud**  
 
-This project showcases a **Retrieval-Augmented Generation (RAG) system** designed for **flexibility, scalability, and real-world deployment**. 
+This project delivers a **Retrieval-Augmented Generation (RAG) solution** architected for **enterprise-grade deployments**—offline, on-premises, or in private/public cloud environments.
 
 Powered by **Azure AI Containers**, it ensures **high-performance retrieval, accuracy, and security**—whether running **fully offline, or in any cloud environment**.
 

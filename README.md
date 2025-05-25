@@ -41,16 +41,15 @@ cd edge-rag
 Create a `.env` file in the root directory with the following content:
 
 <details>
-<summary>Click to expand</summary>
 
 ```env
-# Azure AI Language Disconnected Container
-AZURE_LANGUAGE_ENDPOINT=https://edge-rag-lang.cognitiveservices.azure.com/
-AZURE_LANGUAGE_KEY=EjMcDW7R4nr2c4zkUOKhXD7N6anIleWJpTcUL53zUei0Uyk9xOMJJQQJ99BCACYeBjFXJ3w3AAAaACOGCBOB
+# Azure AI Language Connected Container
+AZURE_LANGUAGE_ENDPOINT=https://yourAIlanguageService.cognitiveservices.azure.com/
+AZURE_LANGUAGE_KEY=key
 
 # Azure Document Intelligence Disconnected Container
-AZURE_DOC_INTEL_ENDPOINT=https://edge-rag-docintel.cognitiveservices.azure.com/
-AZURE_DOC_INTEL_KEY=3A0FxGckRdsnZ97854vq4bYAD4bjgPnRZFZv0FTjiclef1rqtebMJQQJ99BDACYeBjFXJ3w3AAALACOGQEO9
+AZURE_DOC_INTEL_ENDPOINT=https://yourDocumentIntelService.cognitiveservices.azure.com/
+AZURE_DOC_INTEL_KEY=key
 
 # Qdrant Configuration
 QDRANT_HOST=localhost

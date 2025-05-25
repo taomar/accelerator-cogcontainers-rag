@@ -40,8 +40,6 @@ cd edge-rag
 ### **2️⃣ Create a `.env` File**
 Create a `.env` file in the root directory with the following content:
 
-<details>
-
 ```env
 # Azure AI Language Connected Container
 AZURE_LANGUAGE_ENDPOINT=https://yourAIlanguageService.cognitiveservices.azure.com/

@@ -23,7 +23,7 @@ Ensure you have the following installed before proceeding:
 - **Python 3.9+** → [Download Here](https://www.python.org/downloads/)
 - **Docker** → [Download Here](https://www.docker.com/get-started/)
 - **Ollama** → [Install Guide](https://ollama.com)
-- **Azure Document Intelligence Connected/Disconnected Containers (you can use connected containers as well as disconnected following same, Disconnected containers needs prereservation)** → [Disconnected Containers]((https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/containers/disconnected?view=doc-intel-4.0.0#document-intelligence-container-models-and-configuration))
+- **Azure Document Intelligence Connected/Disconnected Containers (you can use connected containers as well as disconnected following same, Disconnected containers needs prereservation)** → [Disconnected Containers](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/containers/disconnected?view=doc-intel-4.0.0#document-intelligence-container-models-and-configuration)
 
 
 ### **1️⃣ Clone the Repository**

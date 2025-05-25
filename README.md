@@ -1,4 +1,4 @@
-# On Premises RAG solution, Powered by Azure Cognitive Services 🔍  
+# Anycloud | On Premises RAG solution, Powered by Azure Cognitive Services 🔍  
 **Deployable Offline | On-Premise | Any Cloud**  
 
 This project delivers a **Retrieval-Augmented Generation (RAG) solution** architected for **enterprise-grade deployments**—offline, on-premises, or in private/public cloud environments.

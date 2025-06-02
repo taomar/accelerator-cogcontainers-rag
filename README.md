@@ -5,7 +5,7 @@ This project delivers a **Retrieval-Augmented Generation (RAG) solution** archit
 
 Powered by **Azure AI Containers**, it ensures **high-performance retrieval, accuracy, and security**—whether running **fully offline, or in any cloud environment**.
 
-<img src="ragdcvsdx.jpg" alt="Architecture Diagram" width="400"/>
+<img src="ragdcvsdx.jpg" alt="Architecture Diagram" width="800"/>
 
 ## **Why This Matters?**
 

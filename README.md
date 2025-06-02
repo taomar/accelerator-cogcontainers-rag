@@ -1,4 +1,4 @@
-# Anycloud | On Premises RAG solution, Powered by Azure Cognitive Services 🔍  
+# On-Premises RAG solution powered by Azure AI Disconnected Containers 🔍  
 **Deployable Offline | On-Premise | Any Cloud**  
 
 This project delivers a **Retrieval-Augmented Generation (RAG) solution** architected for **enterprise-grade deployments**—offline, on-premises, or in private/public cloud environments.

@@ -5,6 +5,8 @@ This project delivers a **Retrieval-Augmented Generation (RAG) solution** archit
 
 Powered by **Azure AI Containers**, it ensures **high-performance retrieval, accuracy, and security**—whether running **fully offline, or in any cloud environment**.
 
+<img src="ragdcvsdx.jpeg" alt="Architecture Diagram" width="400"/>
+
 ## **Why This Matters?**
 
 **Hybrid Retrieval**: Combines **Qdrant (vector search)**, **BM25 (keyword matching)**, and **Ollama embeddings** to enhance ranking and accuracy.  
